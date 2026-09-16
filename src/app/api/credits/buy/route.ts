@@ -21,20 +21,19 @@ export async function POST(request: Request) {
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, email: true, country: true },
+    select: { id: true, email: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   try {
-    const { authorizationUrl, displayAmount } = await initializePayment(
+    const { authorizationUrl, amountUsd } = await initializePayment(
       user.email,
       plan,
       user.id,
-      user.country,
     );
-    return NextResponse.json({ url: authorizationUrl, displayAmount });
+    return NextResponse.json({ url: authorizationUrl, amountUsd });
   } catch {
     return NextResponse.json({ error: "Payment initialization failed" }, { status: 500 });
   }

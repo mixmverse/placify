@@ -2,19 +2,28 @@
 import crypto from "crypto";
 import db from "./db";
 import { grantCredits } from "./credits";
-import { getCurrency, getPlanPrice } from "./currency";
+import { PLANS } from "./currency";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY ?? "";
 
-// ── Initialize a payment ──────────────────────────────────────
+function getPlanCredits(plan: string): number {
+  const found = PLANS.find((p) => p.key === plan);
+  return found?.credits ?? 10;
+}
+
+function getPlanPriceUsd(plan: string): number {
+  const found = PLANS.find((p) => p.key === plan);
+  return found?.priceUsd ?? 5;
+}
+
+// ── Initialize a payment (always USD) ─────────────────────────
 export async function initializePayment(
   email: string,
   plan: string,
   userId: string,
-  countryCode: string | null,
 ) {
-  const currency = getCurrency(countryCode);
-  const price = getPlanPrice(plan, currency.code);
+  const priceUsd = getPlanPriceUsd(plan);
+  const amountCents = priceUsd * 100; // Paystack uses cents for USD
   const reference = `PLACIFY_${plan}_${userId.slice(0, 8)}_${Date.now()}`;
 
   const res = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -25,11 +34,16 @@ export async function initializePayment(
     },
     body: JSON.stringify({
       email,
-      amount: price.amount,  // in smallest currency unit (kobo/pesewas/cents/pence)
-      currency: currency.code, // NGN, GHS, ZAR, KES, USD, GBP
+      amount: amountCents,
+      currency: "USD",
       reference,
       callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/artist/credits`,
-      metadata: JSON.stringify({ userId, plan, credits: planToCredits(plan), currency: currency.code }),
+      metadata: JSON.stringify({
+        userId,
+        plan,
+        credits: getPlanCredits(plan),
+        currency: "USD",
+      }),
     }),
   });
 
@@ -42,9 +56,7 @@ export async function initializePayment(
     authorizationUrl: data.data.authorization_url as string,
     accessCode: data.data.access_code as string,
     reference: data.data.reference as string,
-    currency: currency.code,
-    amount: price.amount,
-    displayAmount: price.display,
+    amountUsd: priceUsd,
   };
 }
 
@@ -91,21 +103,11 @@ export async function handlePaystackWebhook(event: {
     const plan = metadata.plan;
 
     if (userId && plan) {
-      const credits = planToCredits(plan);
+      const credits = getPlanCredits(plan);
       const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
       if (user) {
         await grantCredits(userId, credits, "PACK_PURCHASE", event.data.reference);
       }
     }
-  }
-}
-
-// ── Helpers ───────────────────────────────────────────────────
-export function planToCredits(plan: string): number {
-  switch (plan) {
-    case "STARTER": return 25;
-    case "PRO": return 75;
-    case "LABEL": return 200;
-    default: return 10;
   }
 }

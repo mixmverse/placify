@@ -2,34 +2,20 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 
-// Currency configs inline (avoids server/client boundary issues)
-const CURRENCY_MAP: Record<string, { symbol: string; code: string }> = {
-  NG: { symbol: "₦", code: "NGN" },
-  GH: { symbol: "GH₵", code: "GHS" },
-  ZA: { symbol: "R", code: "ZAR" },
-  KE: { symbol: "KSh", code: "KES" },
-  US: { symbol: "$", code: "USD" },
-  GB: { symbol: "£", code: "GBP" },
-};
+const PLANS = [
+  { key: "STARTER", name: "Starter", priceUsd: 5, credits: 25 },
+  { key: "PRO", name: "Pro", priceUsd: 12, credits: 75 },
+  { key: "LABEL", name: "Label", priceUsd: 25, credits: 200 },
+] as const;
 
-const PLAN_PRICES: Record<string, Record<string, { display: string; amount: number }>> = {
-  NGN: { STARTER: { display: "₦500", amount: 500_00 }, PRO: { display: "₦1,200", amount: 1200_00 }, LABEL: { display: "₦2,500", amount: 2500_00 } },
-  GHS: { STARTER: { display: "GH₵5", amount: 5_00 }, PRO: { display: "GH₵12", amount: 12_00 }, LABEL: { display: "GH₵25", amount: 25_00 } },
-  ZAR: { STARTER: { display: "R10", amount: 10_00 }, PRO: { display: "R25", amount: 25_00 }, LABEL: { display: "R50", amount: 50_00 } },
-  KES: { STARTER: { display: "KSh65", amount: 65_00 }, PRO: { display: "KSh160", amount: 160_00 }, LABEL: { display: "KSh325", amount: 325_00 } },
-  USD: { STARTER: { display: "$1", amount: 1_00 }, PRO: { display: "$2.50", amount: 2_50 }, LABEL: { display: "$5", amount: 5_00 } },
-  GBP: { STARTER: { display: "£0.80", amount: 80 }, PRO: { display: "£2", amount: 2_00 }, LABEL: { display: "£4", amount: 4_00 } },
+// Approximate rates for display (actual charge is USD)
+const LOCAL_RATES: Record<string, { symbol: string; rate: number }> = {
+  NG: { symbol: "₦", rate: 1500 },
+  GH: { symbol: "GH₵", rate: 12 },
+  ZA: { symbol: "R", rate: 18 },
+  KE: { symbol: "KSh", rate: 130 },
+  GB: { symbol: "£", rate: 0.80 },
 };
-
-function getPlans(countryCode: string | null) {
-  const cur = CURRENCY_MAP[countryCode ?? ""] ?? CURRENCY_MAP.NG;
-  const prices = PLAN_PRICES[cur.code] ?? PLAN_PRICES.NGN;
-  return [
-    { key: "STARTER", name: "Starter", price: prices.STARTER.display, credits: 25, perPitch: `${(prices.STARTER.amount / 25 / 100).toFixed(2)}`, popular: false },
-    { key: "PRO", name: "Pro", price: prices.PRO.display, credits: 75, perPitch: `${(prices.PRO.amount / 75 / 100).toFixed(2)}`, popular: true },
-    { key: "LABEL", name: "Label", price: prices.LABEL.display, credits: 200, perPitch: `${(prices.LABEL.amount / 200 / 100).toFixed(2)}`, popular: false },
-  ];
-}
 
 export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null);
@@ -69,8 +55,6 @@ export default function CreditsPage() {
     }
   }, [fetchData]);
 
-  const PLANS = getPlans(country);
-
   async function handleBuy(plan: string) {
     setLoading(plan);
     setMessage(null);
@@ -93,12 +77,13 @@ export default function CreditsPage() {
     }
   }
 
-  const currencySymbol = (CURRENCY_MAP[country ?? ""] ?? CURRENCY_MAP.NG).symbol;
+  const localRate = country ? LOCAL_RATES[country] : null;
 
   return (
     <div className="p-8 space-y-8">
       <h1 className="text-3xl font-bold">Credits</h1>
 
+      {/* Balance */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:bg-zinc-950">
         <p className="text-sm text-zinc-500">Balance</p>
         <p className="text-5xl font-bold">{balance !== null ? balance : "—"} ⚡</p>
@@ -113,43 +98,60 @@ export default function CreditsPage() {
 
       <div>
         <h2 className="text-xl font-semibold">Buy Credits</h2>
-        {country && (
-          <p className="mt-1 text-sm text-zinc-500">Prices shown in your local currency ({(CURRENCY_MAP[country] ?? CURRENCY_MAP.NG).code})</p>
-        )}
+        <p className="mt-1 text-sm text-zinc-500">
+          All prices in USD. Your bank handles the conversion.
+          {localRate && (
+            <span className="ml-1 text-zinc-400">
+              (Approx. {localRate.symbol}1 = $1 × {localRate.rate})
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {PLANS.map((plan) => (
-          <div
-            key={plan.key}
-            className={`relative rounded-2xl border p-6 transition-shadow hover:shadow-md ${
-              plan.popular
-                ? "border-black bg-zinc-50 shadow-sm dark:border-white dark:bg-zinc-900"
-                : "border-zinc-200 bg-white dark:bg-zinc-950"
-            }`}
-          >
-            {plan.popular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-black">
-                Most Popular
-              </span>
-            )}
-            <p className="text-lg font-semibold">{plan.name}</p>
-            <p className="mt-2 text-4xl font-bold">{plan.price}</p>
-            <p className="text-sm text-zinc-500">{plan.credits} credits</p>
-            <p className="mt-1 text-sm text-zinc-400">{currencySymbol}{plan.perPitch}/pitch</p>
-            <button
-              onClick={() => handleBuy(plan.key)}
-              disabled={loading !== null}
-              className={`mt-4 w-full rounded-full py-2.5 text-sm font-medium transition-colors ${
-                plan.popular
-                  ? "bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-                  : "bg-zinc-100 text-black hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
-              } disabled:opacity-50`}
+        {PLANS.map((plan, i) => {
+          const local = localRate ? `${localRate.symbol}${(plan.priceUsd * localRate.rate).toLocaleString()}` : null;
+          return (
+            <div
+              key={plan.key}
+              className={`relative rounded-2xl border p-6 transition-shadow hover:shadow-md ${
+                i === 1
+                  ? "border-black bg-zinc-50 shadow-sm dark:border-white dark:bg-zinc-900"
+                  : "border-zinc-200 bg-white dark:bg-zinc-950"
+              }`}
             >
-              {loading === plan.key ? "Redirecting to Paystack..." : "Buy Now →"}
-            </button>
-          </div>
-        ))}
+              {i === 1 && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-black">
+                  Most Popular
+                </span>
+              )}
+              <p className="text-lg font-semibold">{plan.name}</p>
+
+              {/* USD price */}
+              <p className="mt-2 text-4xl font-bold">${plan.priceUsd}</p>
+
+              {/* Local equivalent */}
+              {local && (
+                <p className="text-sm text-zinc-400">≈ {local}</p>
+              )}
+
+              <p className="text-sm text-zinc-500">{plan.credits} credits</p>
+              <p className="mt-1 text-sm text-zinc-400">${(plan.priceUsd / plan.credits).toFixed(2)}/pitch</p>
+
+              <button
+                onClick={() => handleBuy(plan.key)}
+                disabled={loading !== null}
+                className={`mt-4 w-full rounded-full py-2.5 text-sm font-medium transition-colors ${
+                  i === 1
+                    ? "bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                    : "bg-zinc-100 text-black hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+                } disabled:opacity-50`}
+              >
+                {loading === plan.key ? "Redirecting to Paystack..." : "Buy Now →"}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <p className="text-xs text-zinc-400">Payments processed securely via Paystack. You can cancel anytime.</p>

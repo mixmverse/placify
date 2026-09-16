@@ -1,6 +1,12 @@
 // src/app/(marketing)/pricing/page.tsx
 import Link from "next/link";
 
+const PLANS = [
+  { name: "Starter", price: "$5", credits: 25, perPitch: "$0.20", popular: false },
+  { name: "Pro", price: "$12", credits: 75, perPitch: "$0.16", popular: true },
+  { name: "Label", price: "$25", credits: 200, perPitch: "$0.125", popular: false },
+];
+
 export default function PricingPage() {
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
@@ -12,11 +18,7 @@ export default function PricingPage() {
           Pay once per pitch. Curators keep 100% of their fee. No hidden charges.
         </p>
         <div className="grid gap-6 md:grid-cols-3">
-          {[
-            { name: "Starter", price: "₦500", credits: 25, perPitch: "₦20", popular: false },
-            { name: "Pro", price: "₦1,200", credits: 75, perPitch: "₦16", popular: true },
-            { name: "Label", price: "₦2,500", credits: 200, perPitch: "₦12.50", popular: false },
-          ].map((tier) => (
+          {PLANS.map((tier) => (
             <div key={tier.name} className={`rounded-2xl border p-6 ${tier.popular ? "border-black bg-zinc-100 dark:border-white dark:bg-zinc-800" : "border-zinc-200 bg-white dark:bg-zinc-950"}`}>
               {tier.popular && <span className="rounded-full bg-black px-3 py-1 text-xs text-white dark:bg-white dark:text-black">Popular</span>}
               <p className="mt-4 text-4xl font-bold">{tier.price}</p>
