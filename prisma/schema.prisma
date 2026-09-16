@@ -89,7 +89,8 @@ model ArtistProfile {
 }
 
 model CuratorProfile {
-  userId          String  @id
+  id              String  @id @default(cuid())
+  userId          String  @unique
   user            User    @relation(fields: [userId], references: [id])
   displayName     String
   bio             String?
@@ -103,6 +104,8 @@ model CuratorProfile {
   priceCents      Int     @default(0)  // 0 = free, otherwise cents per submission
   paymentMethod   String?  // "paypal", "stripe", "cashapp", "venmo", etc.
   paymentInfo     String?  // PayPal email, Stripe link, CashApp tag, etc.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // ── Catalog ──────────────────────────────────────────────────────

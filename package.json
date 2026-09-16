@@ -18,6 +18,7 @@
     "spotify:json": "tsx scripts/spotify-seed.ts --output-only",
     "curators:seed": "tsx scripts/seed-curators.ts",
     "curators:seed:pdf": "tsx scripts/seed-pdf-curators.ts",
+    "curators:seed:online": "tsx scripts/seed-online-curators.ts",
     "postinstall": "prisma generate",
     "db:deploy": "prisma migrate deploy"
   },
