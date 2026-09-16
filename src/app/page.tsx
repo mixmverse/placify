@@ -49,18 +49,9 @@ const WHY_US = [
   },
 ];
 
-const COMPARISON = [
-  { feature: "Starting price", placify: "$5", playlistPush: "$280", submithub: "$1–$10" },
-  { feature: "Curator keeps", placify: "100%", playlistPush: "~40%", submithub: "~50%" },
-  { feature: "Response time", placify: "7 days", playlistPush: "14 days", submithub: "7 days" },
-  { feature: "Auto-refund", placify: "✓ Yes", playlistPush: "✗ No", submithub: "✗ No" },
-  { feature: "Genre matching", placify: "✓ Automatic", playlistPush: "✓ Manual", submithub: "✗ None" },
-  { feature: "Global access", placify: "✓ All countries", playlistPush: "✗ 49 blocked", submithub: "✓ Most" },
-];
-
 const TESTIMONIALS = [
   { name: "Afro B.", role: "Artist, Lagos", text: "Got my track on 3 playlists in under a week. The genre matching is spot on." },
-  { name: "DJ Mello", role: "Curator, 12K followers", text: "I earn more here than SubmitHub because I keep 100% of my fee. No-brainer." },
+  { name: "DJ Mello", role: "Curator, 12K followers", text: "I keep 100% of my fee. Way better than other platforms where they take a cut." },
   { name: "Luna Ray", role: "Indie Artist, London", text: "Finally a platform that doesn't block African artists. Started at $5 and got real placements." },
 ];
 
@@ -260,38 +251,6 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Comparison Table — glass */}
-      <section className="bg-black px-6 py-24">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Placify vs the competition
-          </h2>
-          <p className="mt-3 text-center text-white/50">See how we compare on what matters</p>
-          <div className="mt-10 overflow-hidden rounded-2xl border border-white/10 backdrop-blur-sm">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 bg-white/5">
-                  <th className="px-6 py-4 font-medium text-white/50">Feature</th>
-                  <th className="px-6 py-4 font-bold text-emerald-400">Placify</th>
-                  <th className="px-6 py-4 font-medium text-white/50">Playlist Push</th>
-                  <th className="px-6 py-4 font-medium text-white/50">SubmitHub</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row, i) => (
-                  <tr key={row.feature} className={i < COMPARISON.length - 1 ? "border-b border-white/5" : ""}>
-                    <td className="px-6 py-4 font-medium text-white">{row.feature}</td>
-                    <td className="px-6 py-4 font-semibold text-emerald-400">{row.placify}</td>
-                    <td className="px-6 py-4 text-white/40">{row.playlistPush}</td>
-                    <td className="px-6 py-4 text-white/40">{row.submithub}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </section>

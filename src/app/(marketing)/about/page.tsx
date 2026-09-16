@@ -7,15 +7,6 @@ export const metadata: Metadata = {
     "Independent musicians shouldn't have to choose between promoting their music and paying their rent. Learn why we built Placify.",
 };
 
-const COMPARISON = [
-  { feature: "Cost per submission", pp: "from $0.20*", sub: "$1–$3", daily: "Free–$2.00", push: "Campaign-based" },
-  { feature: "Monthly plan", pp: "from $5/mo", sub: "No flat rate", daily: "$19.99/mo", push: "No flat rate" },
-  { feature: "Curator payout model", pp: "Revenue share", sub: "Per review (varies)", daily: "Premium split model", push: "Campaign compensation" },
-  { feature: "Response policy", pp: "No response → credit refund", sub: "Premium: 48h target", daily: "Premium: 7-day feedback/refund", push: "No guarantee" },
-  { feature: "Min. playlist followers", pp: "50+", sub: "1,000+", daily: "100+ (standard)", push: "1,000+" },
-  { feature: "Curator verification", pp: "Required", sub: "Screened / varies", daily: "Standard + Premium tiers", push: "Application + review" },
-];
-
 export default function AboutPage() {
   return (
     <>
@@ -44,9 +35,8 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-white">The Problem with Playlist Pitching Today</h2>
           <p className="mt-4 text-white/60">
             If you&apos;re an independent musician trying to get your music heard on Spotify, you already know
-            how difficult the landscape is. Platforms like SubmitHub, DailyPlaylists, and Playlist Push were
-            early pioneers — but over time, the economics shifted against the very artists these platforms
-            were meant to serve.
+            how difficult the landscape is. Most platforms charge high fees per submission, take a big cut
+            of what curators earn, and offer little protection when things go wrong.
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
@@ -100,40 +90,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Comparison Table */}
-      <section className="bg-black px-6 py-20">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-2xl font-bold text-white">How We Compare</h2>
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="py-3 pr-4 font-medium text-white/50">Feature</th>
-                  <th className="py-3 pr-4 font-semibold text-emerald-400">Placify</th>
-                  <th className="py-3 pr-4 text-white/50">SubmitHub</th>
-                  <th className="py-3 pr-4 text-white/50">DailyPlaylists</th>
-                  <th className="py-3 text-white/50">Playlist Push</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row) => (
-                  <tr key={row.feature} className="border-b border-white/5">
-                    <td className="py-3 pr-4 font-medium text-white/80">{row.feature}</td>
-                    <td className="py-3 pr-4 font-medium text-white">{row.pp}</td>
-                    <td className="py-3 pr-4 text-white/40">{row.sub}</td>
-                    <td className="py-3 pr-4 text-white/40">{row.daily}</td>
-                    <td className="py-3 text-white/40">{row.push}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-white/30">
-            *With Artist subscription (from $5/mo for 25 submissions = $0.20 each). Based on publicly available
-            platform information; pricing and requirements can change.
-          </p>
-        </div>
-      </section>
     </>
   );
 }
