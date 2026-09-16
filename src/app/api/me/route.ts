@@ -17,6 +17,7 @@ export async function GET() {
       creditBalance: true,
       isArtist: true,
       isCurator: true,
+      country: true,
     },
   });
 
@@ -30,5 +31,6 @@ export async function GET() {
     creditBalance: user.creditBalance,
     isArtist: user.isArtist,
     isCurator: user.isCurator,
+    country: user.country,
   });
 }

@@ -5,6 +5,16 @@ import { signIn } from "next-auth/react";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
+const COUNTRIES = [
+  { code: "NG", name: "Nigeria", flag: "🇳🇬" },
+  { code: "GH", name: "Ghana", flag: "🇬🇭" },
+  { code: "ZA", name: "South Africa", flag: "🇿🇦" },
+  { code: "KE", name: "Kenya", flag: "🇰🇪" },
+  { code: "US", name: "United States", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  { code: "OTHER", name: "Other", flag: "🌍" },
+];
+
 function RegisterForm() {
   const params = useSearchParams();
   const roleParam = params.get("role") as "artist" | "curator" | null;
@@ -12,6 +22,7 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [country, setCountry] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +48,7 @@ function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password, role, country: country || null }),
       });
       const data = await res.json();
 
@@ -46,7 +57,6 @@ function RegisterForm() {
         return;
       }
 
-      // Auto sign-in after registration
       await signIn("credentials", {
         email,
         password,
@@ -76,7 +86,6 @@ function RegisterForm() {
                 : "Choose how you want to join"}
           </p>
 
-          {/* Role selection */}
           {!role && (
             <div className="mt-6 space-y-3">
               <button
@@ -102,7 +111,6 @@ function RegisterForm() {
             </div>
           )}
 
-          {/* Registration form */}
           {role && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
@@ -131,6 +139,27 @@ function RegisterForm() {
                     className="mt-1 block w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:focus:border-white"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="reg-country" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Country</label>
+                  <select
+                    id="reg-country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:focus:border-white"
+                  >
+                    <option value="">Select your country</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                    ))}
+                  </select>
+                  {country && (
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Prices will be shown in your local currency
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="reg-password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</label>
                   <input

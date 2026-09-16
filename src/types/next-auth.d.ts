@@ -9,6 +9,7 @@ declare module "next-auth" {
       image?: string | null;
       isArtist: boolean;
       isCurator: boolean;
+      country?: string | null;
     };
   }
 }
@@ -18,5 +19,6 @@ declare module "next-auth/jwt" {
     id?: string;
     isArtist?: boolean;
     isCurator?: boolean;
+    country?: string | null;
   }
 }

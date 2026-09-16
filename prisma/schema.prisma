@@ -58,6 +58,7 @@ model User {
   isArtist      Boolean  @default(false)
   isCurator     Boolean  @default(false)
   creditBalance Int      @default(0)
+  country       String?  // ISO 3166-1 alpha-2: NG, GH, ZA, KE, US, GB, etc.
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

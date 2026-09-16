@@ -2,16 +2,19 @@
 import crypto from "crypto";
 import db from "./db";
 import { grantCredits } from "./credits";
+import { getCurrency, getPlanPrice } from "./currency";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY ?? "";
 
 // ── Initialize a payment ──────────────────────────────────────
 export async function initializePayment(
   email: string,
-  amountInKobo: number,
   plan: string,
   userId: string,
+  countryCode: string | null,
 ) {
+  const currency = getCurrency(countryCode);
+  const price = getPlanPrice(plan, currency.code);
   const reference = `PLACIFY_${plan}_${userId.slice(0, 8)}_${Date.now()}`;
 
   const res = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -22,10 +25,11 @@ export async function initializePayment(
     },
     body: JSON.stringify({
       email,
-      amount: amountInKobo, // Paystack uses kobo (₦1 = 100 kobo)
+      amount: price.amount,  // in smallest currency unit (kobo/pesewas/cents/pence)
+      currency: currency.code, // NGN, GHS, ZAR, KES, USD, GBP
       reference,
       callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/artist/credits`,
-      metadata: JSON.stringify({ userId, plan, credits: planToCredits(plan) }),
+      metadata: JSON.stringify({ userId, plan, credits: planToCredits(plan), currency: currency.code }),
     }),
   });
 
@@ -38,6 +42,9 @@ export async function initializePayment(
     authorizationUrl: data.data.authorization_url as string,
     accessCode: data.data.access_code as string,
     reference: data.data.reference as string,
+    currency: currency.code,
+    amount: price.amount,
+    displayAmount: price.display,
   };
 }
 
@@ -53,9 +60,10 @@ export async function verifyTransaction(reference: string) {
   }
 
   return data.data as {
-    status: string; // "success" | "failed" | "abandoned"
+    status: string;
     reference: string;
     amount: number;
+    currency: string;
     customer: { email: string };
     metadata: Record<string, unknown>;
   };
@@ -73,6 +81,7 @@ export async function handlePaystackWebhook(event: {
     status: string;
     reference: string;
     amount: number;
+    currency: string;
     metadata?: Record<string, unknown>;
   };
 }) {
@@ -91,21 +100,12 @@ export async function handlePaystackWebhook(event: {
   }
 }
 
-// ── Helper ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
 export function planToCredits(plan: string): number {
   switch (plan) {
     case "STARTER": return 25;
     case "PRO": return 75;
     case "LABEL": return 200;
     default: return 10;
-  }
-}
-
-export function planToPriceKobo(plan: string): number {
-  switch (plan) {
-    case "STARTER": return 500_00;  // ₦500
-    case "PRO": return 1200_00;     // ₦1,200
-    case "LABEL": return 2500_00;   // ₦2,500
-    default: return 500_00;
   }
 }

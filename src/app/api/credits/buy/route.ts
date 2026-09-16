@@ -1,7 +1,7 @@
 // src/app/api/credits/buy/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { initializePayment, planToPriceKobo } from "@/lib/paystack";
+import { initializePayment } from "@/lib/paystack";
 import db from "@/lib/db";
 
 const PLANS = ["STARTER", "PRO", "LABEL"] as const;
@@ -21,23 +21,21 @@ export async function POST(request: Request) {
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, email: true },
+    select: { id: true, email: true, country: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const amountKobo = planToPriceKobo(plan);
-
   try {
-    const { authorizationUrl } = await initializePayment(
+    const { authorizationUrl, displayAmount } = await initializePayment(
       user.email,
-      amountKobo,
       plan,
       user.id,
+      user.country,
     );
-    return NextResponse.json({ url: authorizationUrl });
-  } catch (e) {
+    return NextResponse.json({ url: authorizationUrl, displayAmount });
+  } catch {
     return NextResponse.json({ error: "Payment initialization failed" }, { status: 500 });
   }
 }

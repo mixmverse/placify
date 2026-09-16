@@ -40,13 +40,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         const dbUser = await db.user.findUnique({
           where: { id: user.id },
-          select: { isArtist: true, isCurator: true, email: true },
+          select: { isArtist: true, isCurator: true, email: true, country: true },
         });
         if (dbUser) {
           token.id = dbUser.email;
           token.isArtist = dbUser.isArtist;
           token.isCurator = dbUser.isCurator;
           token.email = dbUser.email;
+          token.country = dbUser.country;
         }
       }
       return token;
@@ -55,6 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.isArtist = token.isArtist as boolean;
         session.user.isCurator = token.isCurator as boolean;
+        session.user.country = token.country as string | null;
       }
       return session;
     },
