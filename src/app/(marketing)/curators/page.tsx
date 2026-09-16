@@ -12,6 +12,20 @@ export const metadata: Metadata = {
     "Browse verified Spotify playlist curators on Placify. Every curator has 50+ real followers. Join as a curator for free and earn from the monthly revenue pool.",
 };
 
+async function fetchPlaylistThumbnail(spotifyPlaylistId: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://open.spotify.com/oembed?url=https://open.spotify.com/playlist/${spotifyPlaylistId}`,
+      { next: { revalidate: 86400 } } // cache 24 hours
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.thumbnail_url ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getCurators() {
   const users = await db.user.findMany({
     where: { isCurator: true },
@@ -23,7 +37,7 @@ async function getCurators() {
     orderBy: { curatorProfile: { totalReviews: "desc" } },
   });
 
-  return users
+  const curators = users
     .filter((u) => u.curatorProfile)
     .map((u) => ({
       userId: u.id,
@@ -44,6 +58,33 @@ async function getCurators() {
         thumbnailUrl: p.thumbnailUrl,
       })),
     }));
+
+  // Fetch real Spotify artwork for playlists that don't have a thumbnail in DB
+  // Limit to first 100 playlists to keep page load fast
+  const playlistFetches: Promise<void>[] = [];
+  let fetchCount = 0;
+
+  for (const curator of curators) {
+    for (const playlist of curator.playlists) {
+      if (playlist.thumbnailUrl || !playlist.spotifyPlaylistId) continue;
+      if (fetchCount >= 100) break; // cap at 100 fetches to avoid rate limits
+
+      fetchCount++;
+      playlistFetches.push(
+        fetchPlaylistThumbnail(playlist.spotifyPlaylistId).then((url) => {
+          if (url) playlist.thumbnailUrl = url;
+        })
+      );
+    }
+    if (fetchCount >= 100) break;
+  }
+
+  // Fetch in batches of 20 to avoid overwhelming Spotify
+  for (let i = 0; i < playlistFetches.length; i += 20) {
+    await Promise.all(playlistFetches.slice(i, i + 20));
+  }
+
+  return curators;
 }
 
 async function getStats() {
@@ -64,7 +105,6 @@ export default async function CuratorsPage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-black px-6 py-20 lg:py-28">
-        {/* Background orbs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-emerald-500/10 blur-[120px]" />
           <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-violet-500/10 blur-[120px]" />
@@ -128,7 +168,7 @@ export default async function CuratorsPage() {
             Browse Our Curators
           </h2>
           <p className="mt-2 text-white/40">
-            Real curators with real Spotify playlists. Each card shows their playlist artwork.
+            Real curators with real Spotify playlists. See their playlist artwork before you pitch.
           </p>
 
           <div className="mt-8">

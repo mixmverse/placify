@@ -226,19 +226,31 @@ export function CuratorGrid({ curators }: { curators: Curator[] }) {
                         title={pl.name}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {/* Gradient background as fallback */}
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background: `linear-gradient(135deg, ${g1}90 0%, ${g2}90 100%)`,
-                          }}
-                        />
-                        {/* Playlist initial */}
-                        <div className="relative flex h-full w-full items-center justify-center">
-                          <span className="text-lg font-bold text-white/80 drop-shadow-lg">
-                            {getInitials(pl.name)}
-                          </span>
-                        </div>
+                        {pl.thumbnailUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={pl.thumbnailUrl}
+                            alt={pl.name}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <>
+                            {/* Gradient background as fallback */}
+                            <div
+                              className="absolute inset-0"
+                              style={{
+                                background: `linear-gradient(135deg, ${g1}90 0%, ${g2}90 100%)`,
+                              }}
+                            />
+                            {/* Playlist initial */}
+                            <div className="relative flex h-full w-full items-center justify-center">
+                              <span className="text-lg font-bold text-white/80 drop-shadow-lg">
+                                {getInitials(pl.name)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         {/* Hover overlay */}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover/pl:opacity-100">
                           <span className="text-xs font-medium text-white">Open ↗</span>
