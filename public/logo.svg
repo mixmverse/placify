@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="gradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#0891b2"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#grad)" filter="url(#glow)"/>
+  
+  <!-- Location pin shape (placement) -->
+  <path d="M100 30 C65 30 40 55 40 85 C40 125 100 170 100 170 C100 170 160 125 160 85 C160 55 135 30 100 30 Z" 
+        fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Musical note inside the pin -->
+  <circle cx="82" cy="95" r="12" fill="white"/>
+  <line x1="94" y1="95" x2="94" y2="55" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <path d="M94 55 C94 55 120 50 120 65 C120 75 105 78 94 75" fill="white" opacity="0.9"/>
+  
+  <!-- Small accent dot -->
+  <circle cx="120" cy="68" r="4" fill="white" opacity="0.7"/>
+</svg>

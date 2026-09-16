@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Location pin shape -->
+  <path d="M100 20 C60 20 30 50 30 85 C30 130 100 180 100 180 C100 180 170 130 170 85 C170 50 140 20 100 20 Z" 
+        fill="url(#grad)"/>
+  
+  <!-- Musical note -->
+  <circle cx="80" cy="90" r="14" fill="white"/>
+  <line x1="94" y1="90" x2="94" y2="48" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <path d="M94 48 C94 48 125 42 125 60 C125 72 108 76 94 72" fill="white" opacity="0.9"/>
+</svg>

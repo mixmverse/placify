@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon -->
+  <path d="M40 8 C22 8 10 20 10 38 C10 58 40 78 40 78 C40 78 70 58 70 38 C70 20 58 8 40 8 Z" 
+        fill="url(#grad)"/>
+  <circle cx="33" cy="38" r="6" fill="white"/>
+  <line x1="39" y1="38" x2="39" y2="20" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M39 20 C39 20 52 17 52 25 C52 30 45 32 39 30" fill="white" opacity="0.9"/>
+  
+  <!-- Wordmark -->
+  <text x="82" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="700" fill="white" letter-spacing="-1">
+    Placify
+  </text>
+</svg>
