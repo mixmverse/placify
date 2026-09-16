@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import db from "@/lib/db";
 import { CuratorGrid } from "@/components/marketing/CuratorGrid";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Curators | Placify — Verified Spotify Playlist Curators",
   description:
