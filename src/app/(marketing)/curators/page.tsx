@@ -41,6 +41,7 @@ async function getCurators() {
         spotifyPlaylistId: p.spotifyPlaylistId,
         followerCount: p.followerCount,
         isVerified: p.isVerified,
+        thumbnailUrl: p.thumbnailUrl,
       })),
     }));
 }
@@ -62,25 +63,37 @@ export default async function CuratorsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-white px-6 py-20 dark:bg-black lg:py-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-black sm:text-5xl dark:text-white">
-            Verified Playlist Curators
+      <section className="relative overflow-hidden bg-black px-6 py-20 lg:py-28">
+        {/* Background orbs */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-emerald-500/10 blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-violet-500/10 blur-[120px]" />
+        </div>
+        <div className="relative mx-auto max-w-3xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-1.5 text-sm text-emerald-400">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            {stats.curators}+ verified curators
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Verified Playlist{" "}
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+              Curators
+            </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/50">
             Every curator on Placify is verified to have real followers on their playlists.
             No bots, no fake playlists — just real curators who love discovering music.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/register?role=curator"
-              className="rounded-full bg-black px-8 py-3 text-base font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black"
+              className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3 text-base font-medium text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
             >
               Join as Curator — Free
             </Link>
             <Link
               href="/register?role=artist"
-              className="rounded-full border border-zinc-300 px-8 py-3 text-base font-medium dark:border-zinc-700 dark:text-zinc-300"
+              className="rounded-full border border-white/10 px-8 py-3 text-base font-medium text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
             >
               Start Pitching as Artist
             </Link>
@@ -89,29 +102,33 @@ export default async function CuratorsPage() {
       </section>
 
       {/* Stats */}
-      <section className="border-y border-zinc-200 bg-zinc-50 px-6 py-8 dark:border-zinc-800 dark:bg-zinc-950">
+      <section className="border-y border-white/5 bg-white/[0.02] px-6 py-8">
         <div className="mx-auto flex max-w-3xl justify-center gap-12">
           {[
-            { value: `${stats.curators}+`, label: "Verified Curators" },
-            { value: `${stats.playlists}+`, label: "Active Playlists" },
-            { value: `${stats.genres}+`, label: "Genres Covered" },
+            { value: `${stats.curators}+`, label: "Verified Curators", color: "text-emerald-400" },
+            { value: `${stats.playlists}+`, label: "Active Playlists", color: "text-violet-400" },
+            { value: `${stats.genres}+`, label: "Genres Covered", color: "text-cyan-400" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="text-2xl font-bold text-black dark:text-white">{stat.value}</div>
-              <div className="text-xs text-zinc-500">{stat.label}</div>
+              <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+              <div className="text-xs text-white/30">{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Browse Curators */}
-      <section className="bg-white px-6 py-16 dark:bg-black">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-black dark:text-white">
+      <section className="relative bg-black px-6 py-16">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-emerald-500/5 blur-[100px]" />
+          <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-violet-500/5 blur-[100px]" />
+        </div>
+        <div className="relative mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold text-white">
             Browse Our Curators
           </h2>
-          <p className="mt-2 text-zinc-500">
-            Real curators with real Spotify playlists. Click to pitch your music.
+          <p className="mt-2 text-white/40">
+            Real curators with real Spotify playlists. Each card shows their playlist artwork.
           </p>
 
           <div className="mt-8">
@@ -121,25 +138,23 @@ export default async function CuratorsPage() {
       </section>
 
       {/* Benefits */}
-      <section className="bg-zinc-50 px-6 py-16 dark:bg-zinc-950">
+      <section className="border-y border-white/5 bg-white/[0.02] px-6 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-black dark:text-white">Why Curators Love Placify</h2>
-          <div className="mt-8 space-y-6">
+          <h2 className="text-2xl font-bold text-white">Why Curators Love Placify</h2>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2">
             {[
-              { title: "Always Free", desc: "No subscription, no credit card, ever. List unlimited playlists with 50+ followers." },
-              { title: "Get Paid for Reviewing", desc: "Earn a share of the monthly revenue pool based on your review activity and playlist retention." },
-              { title: "Set Your Preferences", desc: "Choose which genres you accept and set your response pace. You control your queue." },
-              { title: "Quality Submissions", desc: "Every track comes from a verified Spotify link. No spam, no filler — just real music." },
-              { title: "Dashboard Analytics", desc: "Track your submissions, earnings, response times, and playlist performance from one dashboard." },
-              { title: "Founding Curator Status", desc: "Early curators get permanent Founding Curator badges and priority placement in artist searches." },
+              { icon: "🆓", title: "Always Free", desc: "No subscription, no credit card, ever. List unlimited playlists." },
+              { icon: "💰", title: "Get Paid for Reviewing", desc: "Earn directly from artists — you keep 100% of your fee." },
+              { icon: "🎛️", title: "Set Your Preferences", desc: "Choose which genres you accept and set your response pace." },
+              { icon: "🎵", title: "Quality Submissions", desc: "Every track comes from a verified Spotify link. No spam." },
+              { icon: "📊", title: "Dashboard Analytics", desc: "Track submissions, earnings, and response times from one dashboard." },
+              { icon: "⭐", title: "Founding Curator Status", desc: "Early curators get permanent badges and priority in searches." },
             ].map((b) => (
-              <div key={b.title} className="flex gap-4">
-                <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                  ✓
-                </div>
+              <div key={b.title} className="flex gap-4 rounded-2xl border border-white/5 bg-white/[0.02] p-5">
+                <div className="text-2xl">{b.icon}</div>
                 <div>
-                  <h3 className="font-medium text-black dark:text-white">{b.title}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">{b.desc}</p>
+                  <h3 className="font-medium text-white">{b.title}</h3>
+                  <p className="mt-1 text-sm text-white/40">{b.desc}</p>
                 </div>
               </div>
             ))}
@@ -148,17 +163,23 @@ export default async function CuratorsPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-white px-6 py-16 dark:bg-black">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-black dark:text-white">Ready to join the network?</h2>
-          <p className="mt-2 text-zinc-500">Always free. Earn from day one. Set your own terms.</p>
+      <section className="relative overflow-hidden bg-black px-6 py-16">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-[120px]" />
+        </div>
+        <div className="relative mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-bold text-white">Ready to join the network?</h2>
+          <p className="mt-2 text-white/40">Always free. Earn from day one. Set your own terms.</p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/register?role=curator" className="rounded-full bg-black px-6 py-2.5 text-sm text-white dark:bg-white dark:text-black">
+            <Link
+              href="/register?role=curator"
+              className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
+            >
               Join as Curator — Free
             </Link>
           </div>
-          <p className="mt-3 text-sm text-zinc-400">
-            Already have an account? <Link href="/login" className="underline">Sign In</Link>
+          <p className="mt-3 text-sm text-white/20">
+            Already have an account? <Link href="/login" className="underline hover:text-white/40">Sign In</Link>
           </p>
         </div>
       </section>
