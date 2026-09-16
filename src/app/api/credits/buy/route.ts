@@ -1,7 +1,7 @@
 // src/app/api/credits/buy/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { initializePayment } from "@/lib/paystack";
+import { initializePayment } from "@/lib/flutterwave";
 import db from "@/lib/db";
 
 const PLANS = ["STARTER", "PRO", "LABEL"] as const;
@@ -28,12 +28,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { authorizationUrl, amountUsd } = await initializePayment(
+    const { checkoutUrl, amountUsd } = await initializePayment(
       user.email,
       plan,
       user.id,
     );
-    return NextResponse.json({ url: authorizationUrl, amountUsd });
+    return NextResponse.json({ url: checkoutUrl, amountUsd });
   } catch {
     return NextResponse.json({ error: "Payment initialization failed" }, { status: 500 });
   }

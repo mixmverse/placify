@@ -147,7 +147,7 @@ export default function CreditsPage() {
                     : "bg-zinc-100 text-black hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
                 } disabled:opacity-50`}
               >
-                {loading === plan.key ? "Redirecting to Paystack..." : "Buy Now →"}
+                {loading === plan.key ? "Redirecting to payment..." : "Buy Now →"}
               </button>
             </div>
           );
