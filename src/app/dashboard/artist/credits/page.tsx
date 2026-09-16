@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 
 const PLANS = [
-  { key: "STARTER", name: "Starter", price: "$5", credits: 25, perPitch: "$0.20", popular: false },
-  { key: "PRO", name: "Pro", price: "$12", credits: 75, perPitch: "$0.16", popular: true },
-  { key: "LABEL", name: "Label", price: "$25", credits: 200, perPitch: "$0.125", popular: false },
+  { key: "STARTER", name: "Starter", price: "₦500", credits: 25, perPitch: "₦20", popular: false },
+  { key: "PRO", name: "Pro", price: "₦1,200", credits: 75, perPitch: "₦16", popular: true },
+  { key: "LABEL", name: "Label", price: "₦2,500", credits: 200, perPitch: "₦12.50", popular: false },
 ] as const;
 
 export default function CreditsPage() {
@@ -25,8 +25,8 @@ export default function CreditsPage() {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBalance();
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "1") {
@@ -49,10 +49,9 @@ export default function CreditsPage() {
       });
       const data = await res.json();
       if (data.url) {
-        // Stripe Checkout redirect — must leave the page entirely
         window.location.assign(data.url);
       } else {
-        setMessage("Failed to create checkout session. Please try again.");
+        setMessage("Failed to start payment. Please try again.");
       }
     } catch {
       setMessage("Network error. Please try again.");
@@ -109,13 +108,13 @@ export default function CreditsPage() {
                   : "bg-zinc-100 text-black hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
               } disabled:opacity-50`}
             >
-              {loading === plan.key ? "Redirecting to Stripe..." : "Buy Now →"}
+              {loading === plan.key ? "Redirecting to Paystack..." : "Buy Now →"}
             </button>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-zinc-400">Payments processed securely via Stripe. You can cancel anytime.</p>
+      <p className="text-xs text-zinc-400">Payments processed securely via Paystack. You can cancel anytime.</p>
     </div>
   );
 }
