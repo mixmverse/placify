@@ -70,7 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email: user.email,
               isArtist: true,
               isCurator: false,
-              creditBalance: 10,
+              creditBalance: 0,
             },
           });
         }

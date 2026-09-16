@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         passwordHash,
         isArtist: role === "artist",
         isCurator: role === "curator",
-        creditBalance: role === "artist" ? 10 : 0,
+        creditBalance: 0,
         country: country || null,
       },
     });
