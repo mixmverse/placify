@@ -18,7 +18,26 @@ export function MarketingHeader() {
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-sm font-bold text-white">P</span>
+          <svg viewBox="0 0 40 40" width="32" height="32" className="drop-shadow-lg">
+            <defs>
+              <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#34d399"/>
+                <stop offset="40%" stopColor="#10b981"/>
+                <stop offset="100%" stopColor="#059669"/>
+              </linearGradient>
+              <radialGradient id="hs" cx="35%" cy="30%" r="60%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.35"/>
+                <stop offset="100%" stopColor="white" stopOpacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="20" cy="36" rx="7" ry="1.5" fill="#059669" opacity="0.3"/>
+            <path d="M20 4 C14.5 4 10 8.5 10 14 C10 21 20 31 20 31 C20 31 30 21 30 14 C30 8.5 25.5 4 20 4Z" fill="url(#hg)"/>
+            <path d="M20 4 C14.5 4 10 8.5 10 14 C10 18 13 22 16.5 25.5 L20 4Z" fill="url(#hs)"/>
+            <path d="M20 4 C25.5 4 30 8.5 30 14 C30 17.5 28.5 21 26.5 24 L25.5 24.8 C27.5 21.5 29 18 29 14 C29 8.8 25 4.5 20 4.5Z" fill="white" opacity="0.08"/>
+            <ellipse cx="16" cy="18.8" rx="2.2" ry="1.8" fill="white" transform="rotate(-15, 16, 18.8)"/>
+            <rect x="17.8" y="10" width="0.6" height="9" rx="0.3" fill="white"/>
+            <path d="M18.4 10 C18.4 10 21.5 9.2 21.5 11.2 C21.5 12.8 19.6 13.2 18.4 12.8" fill="white" opacity="0.9"/>
+          </svg>
           Placify
         </Link>
 

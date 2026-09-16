@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "Placify — Organic Spotify Playlist Pitching | Real Curators",
   description:
     "Connect with verified Spotify playlist curators. Artists pitch affordably from $0.20/pitch; curators earn from a monthly revenue pool. 7-day response guarantee.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

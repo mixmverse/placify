@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placify 3D Logo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #050508; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      gap: 60px;
+      padding: 40px;
+    }
+    .row { display: flex; gap: 60px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .label { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; margin-top: 16px; letter-spacing: 2px; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div>
+      <svg viewBox="0 0 400 400" width="300" height="300">
+        <defs>
+          <!-- Main gradient -->
+          <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="40%" stop-color="#10b981"/>
+            <stop offset="100%" stop-color="#059669"/>
+          </linearGradient>
+          <!-- Highlight gradient (top-left shine) -->
+          <radialGradient id="shine" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="white" stop-opacity="0.4"/>
+            <stop offset="50%" stop-color="white" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Drop shadow -->
+          <filter id="shadow3d" x="-20%" y="-10%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#059669" flood-opacity="0.5"/>
+          </filter>
+          <!-- Inner glow -->
+          <filter id="innerGlow">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+            <feOffset dx="0" dy="4" result="offsetBlur"/>
+            <feFlood flood-color="white" flood-opacity="0.15"/>
+            <feComposite in2="offsetBlur" operator="in"/>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <!-- Ambient occlusion / depth shadow at bottom -->
+          <radialGradient id="depthShadow" cx="50%" cy="95%" r="40%">
+            <stop offset="0%" stop-color="#022c22" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#022c22" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Rim light (left edge) -->
+          <linearGradient id="rimLight" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.6"/>
+            <stop offset="15%" stop-color="#6ee7b7" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+          </linearGradient>
+          <!-- Bottom reflection -->
+          <linearGradient id="bottomReflect" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Floor shadow (ellipse) -->
+        <ellipse cx="200" cy="355" rx="70" ry="12" fill="#059669" opacity="0.25"/>
+
+        <!-- Main pin body -->
+        <g filter="url(#shadow3d)">
+          <path d="M200 40 C145 40 100 85 100 140 C100 210 200 310 200 310 C200 310 300 210 300 140 C300 85 255 40 200 40Z" 
+                fill="url(#mainGrad)" stroke="none"/>
+        </g>
+
+        <!-- 3D depth layer (darker offset behind) -->
+        <path d="M205 45 C150 45 107 88 107 143 C107 213 205 313 205 313 C205 313 303 213 303 143 C303 88 260 45 205 45Z" 
+              fill="#047857" opacity="0.4"/>
+
+        <!-- Top surface shine (the light hitting the top-left) -->
+        <path d="M200 40 C145 40 100 85 100 140 C100 180 130 220 165 255 L200 40Z" 
+              fill="url(#shine)"/>
+
+        <!-- Rim light on left edge -->
+        <path d="M200 40 C145 40 100 85 100 140 C100 175 125 215 155 245 L145 255 C110 225 90 180 90 140 C90 80 140 35 200 35Z" 
+              fill="url(#rimLight)" opacity="0.7"/>
+
+        <!-- Inner edge highlight (top-right reflection) -->
+        <path d="M200 40 C255 40 300 85 300 140 C300 175 285 210 265 240 L255 248 C275 215 290 180 290 140 C290 88 250 45 200 45Z" 
+              fill="white" opacity="0.06"/>
+
+        <!-- Musical note - 3D with shadow -->
+        <g filter="url(#innerGlow)">
+          <!-- Note head shadow -->
+          <ellipse cx="160" cy="190" rx="24" ry="20" fill="#022c22" opacity="0.3" transform="translate(3, 3)"/>
+          <!-- Note head -->
+          <ellipse cx="160" cy="188" rx="22" ry="18" fill="white" transform="rotate(-15, 160, 188)"/>
+          <!-- Note head shine -->
+          <ellipse cx="155" cy="183" rx="10" ry="7" fill="white" opacity="0.5" transform="rotate(-15, 155, 183)"/>
+          <!-- Stem shadow -->
+          <rect x="178" y="100" width="7" height="90" rx="3.5" fill="#022c22" opacity="0.2" transform="translate(2, 2)"/>
+          <!-- Stem -->
+          <rect x="178" y="98" width="6" height="90" rx="3" fill="white"/>
+          <!-- Flag shadow -->
+          <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="#022c22" opacity="0.15" transform="translate(2, 2)"/>
+          <!-- Flag -->
+          <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="white" opacity="0.92"/>
+          <!-- Flag shine -->
+          <path d="M186 100 C186 100 210 94 210 112 C210 124 196 127 186 124" fill="white" opacity="0.3"/>
+        </g>
+
+        <!-- Small accent sparkle (top right) -->
+        <g opacity="0.7">
+          <circle cx="280" cy="110" r="3" fill="#6ee7b7"/>
+          <line x1="280" y1="103" x2="280" y2="117" stroke="#6ee7b7" stroke-width="1" opacity="0.5"/>
+          <line x1="273" y1="110" x2="287" y2="110" stroke="#6ee7b7" stroke-width="1" opacity="0.5"/>
+        </g>
+        <g opacity="0.4">
+          <circle cx="300" cy="135" r="2" fill="#6ee7b7"/>
+          <line x1="300" y1="130" x2="300" y2="140" stroke="#6ee7b7" stroke-width="0.8"/>
+          <line x1="295" y1="135" x2="305" y2="135" stroke="#6ee7b7" stroke-width="0.8"/>
+        </g>
+      </svg>
+      <p class="label">3D Logo — Large</p>
+    </div>
+
+    <div>
+      <svg viewBox="0 0 400 400" width="200" height="200">
+        <defs>
+          <linearGradient id="mainGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="40%" stop-color="#10b981"/>
+            <stop offset="100%" stop-color="#059669"/>
+          </linearGradient>
+          <radialGradient id="shine2" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="white" stop-opacity="0.4"/>
+            <stop offset="50%" stop-color="white" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="shadow2" x="-20%" y="-10%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#059669" flood-opacity="0.5"/>
+          </filter>
+          <linearGradient id="rimLight2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.6"/>
+            <stop offset="15%" stop-color="#6ee7b7" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="200" cy="358" rx="55" ry="10" fill="#059669" opacity="0.25"/>
+        <g filter="url(#shadow2)">
+          <path d="M200 40 C145 40 100 85 100 140 C100 210 200 310 200 310 C200 310 300 210 300 140 C300 85 255 40 200 40Z" fill="url(#mainGrad2)"/>
+        </g>
+        <path d="M200 40 C145 40 100 85 100 140 C100 180 130 220 165 255 L200 40Z" fill="url(#shine2)"/>
+        <path d="M200 40 C145 40 100 85 100 140 C100 175 125 215 155 245 L145 255 C110 225 90 180 90 140 C90 80 140 35 200 35Z" fill="url(#rimLight2)" opacity="0.7"/>
+        <path d="M200 40 C255 40 300 85 300 140 C300 175 285 210 265 240 L255 248 C275 215 290 180 290 140 C290 88 250 45 200 45Z" fill="white" opacity="0.06"/>
+        <ellipse cx="160" cy="190" rx="24" ry="20" fill="#022c22" opacity="0.3" transform="translate(3, 3)"/>
+        <ellipse cx="160" cy="188" rx="22" ry="18" fill="white" transform="rotate(-15, 160, 188)"/>
+        <ellipse cx="155" cy="183" rx="10" ry="7" fill="white" opacity="0.5" transform="rotate(-15, 155, 183)"/>
+        <rect x="178" y="100" width="7" height="90" rx="3.5" fill="#022c22" opacity="0.2" transform="translate(2, 2)"/>
+        <rect x="178" y="98" width="6" height="90" rx="3" fill="white"/>
+        <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="#022c22" opacity="0.15" transform="translate(2, 2)"/>
+        <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="white" opacity="0.92"/>
+        <path d="M186 100 C186 100 210 94 210 112 C210 124 196 127 186 124" fill="white" opacity="0.3"/>
+        <circle cx="280" cy="110" r="3" fill="#6ee7b7" opacity="0.7"/>
+        <line x1="280" y1="103" x2="280" y2="117" stroke="#6ee7b7" stroke-width="1" opacity="0.35"/>
+        <line x1="273" y1="110" x2="287" y2="110" stroke="#6ee7b7" stroke-width="1" opacity="0.35"/>
+      </svg>
+      <p class="label">3D Logo — Medium</p>
+    </div>
+
+    <div>
+      <svg viewBox="0 0 400 400" width="100" height="100">
+        <defs>
+          <linearGradient id="mainGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="40%" stop-color="#10b981"/>
+            <stop offset="100%" stop-color="#059669"/>
+          </linearGradient>
+          <radialGradient id="shine3" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="white" stop-opacity="0.4"/>
+            <stop offset="50%" stop-color="white" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="shadow3" x="-20%" y="-10%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#059669" flood-opacity="0.5"/>
+          </filter>
+        </defs>
+        <ellipse cx="200" cy="360" rx="40" ry="8" fill="#059669" opacity="0.25"/>
+        <g filter="url(#shadow3)">
+          <path d="M200 40 C145 40 100 85 100 140 C100 210 200 310 200 310 C200 310 300 210 300 140 C300 85 255 40 200 40Z" fill="url(#mainGrad3)"/>
+        </g>
+        <path d="M200 40 C145 40 100 85 100 140 C100 180 130 220 165 255 L200 40Z" fill="url(#shine3)"/>
+        <ellipse cx="160" cy="188" rx="22" ry="18" fill="white" transform="rotate(-15, 160, 188)"/>
+        <rect x="178" y="98" width="6" height="90" rx="3" fill="white"/>
+        <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="white" opacity="0.92"/>
+      </svg>
+      <p class="label">3D Logo — Small (favicon)</p>
+    </div>
+  </div>
+</body>
+</html>

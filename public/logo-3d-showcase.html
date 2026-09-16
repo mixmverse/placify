@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placify 3D Logo — All Sizes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: system-ui, sans-serif;
+      padding: 40px 20px;
+    }
+    h1 { text-align: center; margin-bottom: 8px; font-size: 24px; }
+    .sub { text-align: center; color: #666; font-size: 14px; margin-bottom: 40px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .card {
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+    .dark { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); }
+    .darker { background: #000; border: 1px solid rgba(255,255,255,0.05); }
+    .gradient { background: linear-gradient(135deg, #059669 0%, #0891b2 50%, #7c3aed 100%); }
+    .light { background: #f8f8f8; border: 1px solid #e5e5e5; }
+    .card h2 { margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.3); letter-spacing: 1px; text-transform: uppercase; }
+    .light h2 { color: #999; }
+    .sizes { display: flex; gap: 40px; align-items: flex-end; }
+    .size-label { font-size: 11px; color: rgba(255,255,255,0.2); margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Placify 3D Logo</h1>
+  <p class="sub">Your chosen design — in context</p>
+  
+  <div class="grid">
+    <!-- Dark background -->
+    <div class="card dark">
+      <img src="logo-3d.svg" width="180" height="180" alt="Placify 3D">
+      <h2>On Dark Background</h2>
+    </div>
+
+    <!-- Pure black -->
+    <div class="card darker">
+      <img src="logo-3d.svg" width="180" height="180" alt="Placify 3D">
+      <h2>On Pure Black</h2>
+    </div>
+
+    <!-- Brand gradient -->
+    <div class="card gradient">
+      <img src="logo-3d.svg" width="180" height="180" alt="Placify 3D" style="filter: brightness(1.1);">
+      <h2>On Brand Gradient</h2>
+    </div>
+
+    <!-- Light background -->
+    <div class="card light">
+      <img src="logo-3d.svg" width="180" height="180" alt="Placify 3D">
+      <h2>On Light Background</h2>
+    </div>
+
+    <!-- Multiple sizes -->
+    <div class="card dark" style="grid-column: span 2;">
+      <div class="sizes">
+        <div>
+          <img src="logo-3d.svg" width="64" height="64" alt="64px">
+          <p class="size-label">64px</p>
+        </div>
+        <div>
+          <img src="logo-3d.svg" width="96" height="96" alt="96px">
+          <p class="size-label">96px</p>
+        </div>
+        <div>
+          <img src="logo-3d.svg" width="128" height="128" alt="128px">
+          <p class="size-label">128px</p>
+        </div>
+        <div>
+          <img src="logo-3d.svg" width="200" height="200" alt="200px">
+          <p class="size-label">200px</p>
+        </div>
+        <div>
+          <img src="logo-3d.svg" width="280" height="280" alt="280px">
+          <p class="size-label">280px</p>
+        </div>
+      </div>
+      <h2 style="margin-top: 24px;">Scalable — crisp at any size</h2>
+    </div>
+
+    <!-- With wordmark -->
+    <div class="card dark" style="grid-column: span 2;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <img src="logo-3d.svg" width="60" height="60" alt="">
+        <span style="font-size: 36px; font-weight: 700; color: white; letter-spacing: -1px;">Placify</span>
+      </div>
+      <h2 style="margin-top: 20px;">Header Usage (Logo + Wordmark)</h2>
+    </div>
+  </div>
+</body>
+</html>

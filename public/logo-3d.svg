@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="40%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="35%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow3d" x="-20%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#059669" flood-opacity="0.5"/>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feOffset dx="0" dy="4" result="offsetBlur"/>
+      <feFlood flood-color="white" flood-opacity="0.15"/>
+      <feComposite in2="offsetBlur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="rimLight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.6"/>
+      <stop offset="15%" stop-color="#6ee7b7" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Floor shadow -->
+  <ellipse cx="200" cy="355" rx="70" ry="12" fill="#059669" opacity="0.25"/>
+
+  <!-- Main pin body with 3D shadow -->
+  <g filter="url(#shadow3d)">
+    <path d="M200 40 C145 40 100 85 100 140 C100 210 200 310 200 310 C200 310 300 210 300 140 C300 85 255 40 200 40Z" 
+          fill="url(#mainGrad)"/>
+  </g>
+
+  <!-- Top surface shine -->
+  <path d="M200 40 C145 40 100 85 100 140 C100 180 130 220 165 255 L200 40Z" 
+        fill="url(#shine)"/>
+
+  <!-- Rim light on left edge -->
+  <path d="M200 40 C145 40 100 85 100 140 C100 175 125 215 155 245 L145 255 C110 225 90 180 90 140 C90 80 140 35 200 35Z" 
+        fill="url(#rimLight)" opacity="0.7"/>
+
+  <!-- Inner edge highlight -->
+  <path d="M200 40 C255 40 300 85 300 140 C300 175 285 210 265 240 L255 248 C275 215 290 180 290 140 C290 88 250 45 200 45Z" 
+        fill="white" opacity="0.06"/>
+
+  <!-- Musical note with 3D depth -->
+  <g filter="url(#innerGlow)">
+    <ellipse cx="163" cy="193" rx="24" ry="20" fill="#022c22" opacity="0.3"/>
+    <ellipse cx="160" cy="188" rx="22" ry="18" fill="white" transform="rotate(-15, 160, 188)"/>
+    <ellipse cx="155" cy="183" rx="10" ry="7" fill="white" opacity="0.5" transform="rotate(-15, 155, 183)"/>
+    <rect x="180" y="102" width="7" height="90" rx="3.5" fill="#022c22" opacity="0.2"/>
+    <rect x="178" y="98" width="6" height="90" rx="3" fill="white"/>
+    <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="#022c22" opacity="0.15" transform="translate(2, 2)"/>
+    <path d="M184 98 C184 98 215 90 215 112 C215 128 196 132 184 128" fill="white" opacity="0.92"/>
+    <path d="M186 100 C186 100 210 94 210 112 C210 124 196 127 186 124" fill="white" opacity="0.3"/>
+  </g>
+
+  <!-- Sparkles -->
+  <g opacity="0.7">
+    <circle cx="280" cy="110" r="3" fill="#6ee7b7"/>
+    <line x1="280" y1="103" x2="280" y2="117" stroke="#6ee7b7" stroke-width="1" opacity="0.5"/>
+    <line x1="273" y1="110" x2="287" y2="110" stroke="#6ee7b7" stroke-width="1" opacity="0.5"/>
+  </g>
+  <g opacity="0.4">
+    <circle cx="300" cy="135" r="2" fill="#6ee7b7"/>
+    <line x1="300" y1="130" x2="300" y2="140" stroke="#6ee7b7" stroke-width="0.8"/>
+    <line x1="295" y1="135" x2="305" y2="135" stroke="#6ee7b7" stroke-width="0.8"/>
+  </g>
+</svg>

@@ -31,7 +31,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:block">
         <div className="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
-          <Link href="/" className="text-lg font-bold text-black dark:text-white">Placify</Link>
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold text-black dark:text-white">
+            <svg viewBox="0 0 40 40" width="24" height="24">
+              <defs>
+                <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#34d399"/>
+                  <stop offset="40%" stopColor="#10b981"/>
+                  <stop offset="100%" stopColor="#059669"/>
+                </linearGradient>
+              </defs>
+              <path d="M20 4 C14.5 4 10 8.5 10 14 C10 21 20 31 20 31 C20 31 30 21 30 14 C30 8.5 25.5 4 20 4Z" fill="url(#sg)"/>
+              <ellipse cx="16" cy="18.8" rx="2.2" ry="1.8" fill="white" transform="rotate(-15, 16, 18.8)"/>
+              <rect x="17.8" y="10" width="0.6" height="9" rx="0.3" fill="white"/>
+              <path d="M18.4 10 C18.4 10 21.5 9.2 21.5 11.2 C21.5 12.8 19.6 13.2 18.4 12.8" fill="white" opacity="0.9"/>
+            </svg>
+            Placify
+          </Link>
           <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
             {isCurator ? "Curator" : "Artist"}
           </span>
