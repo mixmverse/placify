@@ -22,7 +22,6 @@ export async function initializePayment(
   userId: string,
 ) {
   const priceUsd = getPlanPriceUsd(plan);
-  const amountCents = priceUsd * 100; // Flutterwave uses cents for USD
   const txRef = `PLACIFY_${plan}_${userId.slice(0, 8)}_${Date.now()}`;
 
   const res = await fetch(`${FLW_BASE}/payments`, {
