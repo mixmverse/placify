@@ -2,6 +2,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import db from "./db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -13,23 +14,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email;
-        if (typeof email !== "string" || !email.includes("@")) return null;
+        const email = typeof credentials?.email === "string" ? credentials.email : null;
+        const password = typeof credentials?.password === "string" ? credentials.password : null;
+        if (!email || !email.includes("@")) return null;
 
-        // Find existing user or auto-register (local dev only)
-        let user = await db.user.findUnique({ where: { email } });
-        if (!user) {
-          user = await db.user.create({
-            data: {
-              email,
-              isArtist: true,
-              isCurator: false,
-              creditBalance: 10,
-            },
-          });
-        }
+        const user = await db.user.findUnique({ where: { email } });
+        if (!user) return null;
+
+        // If user has no password (Google-only account), reject
+        if (!user.passwordHash || !password) return null;
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) return null;
+
         return { id: user.id, email: user.email };
       },
     }),
@@ -57,6 +57,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.isCurator = token.isCurator as boolean;
       }
       return session;
+    },
+    async signIn({ user, account }) {
+      // For Google OAuth: auto-create user if they don't exist
+      if (account?.provider === "google" && user?.email) {
+        let dbUser = await db.user.findUnique({ where: { email: user.email } });
+        if (!dbUser) {
+          dbUser = await db.user.create({
+            data: {
+              email: user.email,
+              isArtist: true,
+              isCurator: false,
+              creditBalance: 10,
+            },
+          });
+        }
+        user.id = dbUser.id;
+      }
+      return true;
     },
   },
   pages: {
