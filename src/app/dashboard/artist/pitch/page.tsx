@@ -2,47 +2,11 @@
 "use client";
 import { useState } from "react";
 
-// ─── All major Spotify genres ───────────────────────────────────
-const ALL_GENRES = [
-  "afrobeat", "afro pop", "amapiano", "azonto", "bongo flava", "bouyon",
-  "brazilian", "brega funk", "coupé-décalé", "dancehall", "dembow",
-  "desi", "funk", "gqom", "highlife", "hip-hop", "house", "igbo",
-  "kizomba", "kwaito", "k-pop", "latin", "lovers rock",
-  "merengue", "pop", "r&b", "raï", "reggae", "reggaeton",
-  "salsa", "soca", "son cubano", "swing", "tango", "trap",
-  "trip hop", "tropical", "zouk",
-  "acoustic", "alternative", "ambient", "blues", "classical",
-  "country", "disco", "drum and bass", "dubstep", "edm",
-  "electronic", "emo", "folk", "funk", "garage", "grime",
-  "indie", "indie rock", "jazz", "lofi", "metal", "punk",
-  "soul", "techno", "trance", "world", "rock",
-].sort();
-
-// ─── Moods ──────────────────────────────────────────────────────
-const MOODS = [
-  { slug: "chill", label: "Chill", icon: "😌" },
-  { slug: "energetic", label: "Energetic", icon: "⚡" },
-  { slug: "upbeat", label: "Upbeat", icon: "🎉" },
-  { slug: "dark", label: "Dark", icon: "🌑" },
-  { slug: "mellow", label: "Mellow", icon: "🌅" },
-  { slug: "dreamy", label: "Dreamy", icon: "💭" },
-  { slug: "aggressive", label: "Aggressive", icon: "🔥" },
-  { slug: "romantic", label: "Romantic", icon: "❤️" },
-  { slug: "sad", label: "Sad", icon: "😢" },
-  { slug: "happy", label: "Happy", icon: "😊" },
-  { slug: "party", label: "Party", icon: "🥳" },
-  { slug: "focus", label: "Focus", icon: "🎯" },
-  { slug: "workout", label: "Workout", icon: "💪" },
-  { slug: "sleep", label: "Sleep", icon: "😴" },
+const POPULAR_GENRES = [
+  "afrobeat", "amapiano", "dancehall", "hip-hop", "house", "indie",
+  "k-pop", "latin", "lofi", "pop", "r&b", "reggaeton", "trap",
+  "electronic", "jazz", "soul", "rock", "folk", "edm", "punk",
 ];
-
-// ─── Price tiers ────────────────────────────────────────────────
-const PRICE_FILTERS = [
-  { key: "all", label: "Any Price" },
-  { key: "free", label: "Free Only" },
-  { key: "under1", label: "Under $1" },
-  { key: "under5", label: "Under $5" },
-] as const;
 
 type SpotifyPlaylist = {
   id: string;
@@ -73,11 +37,12 @@ type SubmissionResult = {
 };
 
 export default function PitchPage() {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [spotifyUrl, setSpotifyUrl] = useState("");
+  const [detectedGenres, setDetectedGenres] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set());
-  const [selectedMoods, setSelectedMoods] = useState<Set<string>>(new Set());
-  const [priceFilter, setPriceFilter] = useState<"all" | "free" | "under1" | "under5">("all");
   const [genreSearch, setGenreSearch] = useState("");
+  const [customGenres, setCustomGenres] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<"search" | null>(null);
@@ -86,18 +51,11 @@ export default function PitchPage() {
   const [searchSource, setSearchSource] = useState("");
   const [submissionResults, setSubmissionResults] = useState<SubmissionResult[]>([]);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [trackInfo, setTrackInfo] = useState<{ title: string; artistName: string } | null>(null);
 
   const filteredGenres = genreSearch
-    ? ALL_GENRES.filter((g) => g.includes(genreSearch.toLowerCase()))
-    : ALL_GENRES;
-
-  // Apply price filter to displayed playlists
-  const displayedPlaylists = playlists.filter((pl) => {
-    if (priceFilter === "free") return pl.priceCents === 0;
-    if (priceFilter === "under1") return pl.priceCents < 100;
-    if (priceFilter === "under5") return pl.priceCents < 500;
-    return true;
-  });
+    ? POPULAR_GENRES.filter((g) => g.includes(genreSearch.toLowerCase()))
+    : POPULAR_GENRES;
 
   function toggleGenre(genre: string) {
     setSelectedGenres((prev) => {
@@ -108,18 +66,47 @@ export default function PitchPage() {
     });
   }
 
-  function toggleMood(mood: string) {
-    setSelectedMoods((prev) => {
-      const next = new Set(prev);
-      if (next.has(mood)) next.delete(mood);
-      else next.add(mood);
-      return next;
-    });
+  // Step 1 → 2: Analyze Spotify link
+  async function analyzeTrack() {
+    if (!spotifyUrl) {
+      setError("Paste a Spotify track link to continue");
+      return;
+    }
+    setError("");
+    setLoading("search");
+
+    try {
+      const trackId = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/)?.[1];
+      if (!trackId) {
+        setError("Invalid Spotify link — paste a track link (open.spotify.com/track/...)");
+        setLoading(null);
+        return;
+      }
+
+      const res = await fetch(`/api/tracks/analyze?trackId=${trackId}`);
+      if (!res.ok) throw new Error("Could not analyze track");
+      const data = await res.json();
+
+      const genres = data.genres ?? [];
+      setDetectedGenres(genres);
+      setSelectedGenres(new Set(genres));
+      setTrackInfo(data.track ?? null);
+      setStep(2);
+    } catch {
+      setError("Could not analyze track. You can pick genres manually below.");
+      setDetectedGenres([]);
+      setSelectedGenres(new Set());
+      setCustomGenres(true);
+      setStep(2);
+    } finally {
+      setLoading(null);
+    }
   }
 
-  async function searchSpotify() {
+  // Step 2 → 3: Search curators
+  async function searchCurators() {
     if (selectedGenres.size === 0) {
-      setError("Please select at least one genre");
+      setError("Select at least one genre");
       return;
     }
     setError("");
@@ -134,6 +121,7 @@ export default function PitchPage() {
       const data = await res.json();
       setPlaylists(data.playlists ?? []);
       setSearchSource(data.source ?? "");
+      setStep(3);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Search failed");
     } finally {
@@ -151,10 +139,10 @@ export default function PitchPage() {
   }
 
   function toggleAll() {
-    if (selected.size === displayedPlaylists.length) {
+    if (selected.size === playlists.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(displayedPlaylists.map((p) => p.id)));
+      setSelected(new Set(playlists.map((p) => p.id)));
     }
   }
 
@@ -165,14 +153,15 @@ export default function PitchPage() {
 
     try {
       const selectedPlaylists = playlists.filter((p) => selected.has(p.id));
+      const trackId = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? "";
       const res = await fetch("/api/submissions/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          spotifyTrackId: spotifyUrl.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? "",
+          spotifyTrackId: trackId,
           trackInfo: {
-            title: "My Track",
-            artistName: "Artist",
+            title: trackInfo?.title ?? "My Track",
+            artistName: trackInfo?.artistName ?? "Artist",
             artworkUrl: null,
             durationMs: 180000,
             genres: Array.from(selectedGenres),
@@ -223,10 +212,11 @@ export default function PitchPage() {
     return `$${(cents / 100).toFixed(2)}`;
   }
 
-  const totalCost = displayedPlaylists
+  const totalCost = playlists
     .filter((p) => selected.has(p.id))
     .reduce((sum, p) => sum + p.priceCents, 0);
 
+  // ─── SUBMITTED SCREEN ─────────────────────────────────────
   if (submitted) {
     const freeSubs = submissionResults.filter((s) => s.curatorPrice === 0);
     const paidSubs = submissionResults.filter((s) => s.curatorPrice > 0);
@@ -236,13 +226,15 @@ export default function PitchPage() {
       <div className="mx-auto max-w-3xl space-y-6 p-4 lg:p-8">
         <div className="text-center">
           <div className="text-6xl">🎉</div>
-          <h1 className="mt-4 text-2xl font-bold text-black dark:text-white">Submitted!</h1>
+          <h1 className="mt-4 text-2xl font-bold text-black dark:text-white">Pitches sent!</h1>
           <p className="mt-2 text-zinc-500">
             Your track has been sent to {submissionResults.length} curator{submissionResults.length > 1 ? "s" : ""}.
           </p>
+          <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+            🛡️ Artist Protection active — 72h response guarantee
+          </p>
         </div>
 
-        {/* Free curators — ready to review */}
         {freeSubs.length > 0 && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-900/20">
             <h3 className="font-semibold text-emerald-800 dark:text-emerald-400">
@@ -254,7 +246,6 @@ export default function PitchPage() {
           </div>
         )}
 
-        {/* Paid curators — need payment */}
         {paidSubs.length > 0 && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-900/20">
             <h3 className="font-semibold text-amber-800 dark:text-amber-400">
@@ -312,18 +303,21 @@ export default function PitchPage() {
         <div className="text-center">
           <p className="text-sm text-zinc-500 mb-4">
             {allPaid || paidSubs.length === 0
-              ? "All payments done! Curators will review within 72 hours."
+              ? "All done! Curators will review within 72 hours."
               : "Pay curators above, then check your Submissions page for updates."}
           </p>
           <button
             onClick={() => {
               setSubmitted(false);
+              setStep(1);
               setSpotifyUrl("");
+              setDetectedGenres([]);
               setSelectedGenres(new Set());
-              setSelectedMoods(new Set());
               setPlaylists([]);
               setSelected(new Set());
               setSubmissionResults([]);
+              setTrackInfo(null);
+              setCustomGenres(false);
             }}
             className="rounded-full bg-black px-6 py-2.5 text-sm text-white dark:bg-white dark:text-black"
           >
@@ -334,185 +328,201 @@ export default function PitchPage() {
     );
   }
 
+  // ─── MAIN FLOW ────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-4 lg:p-8">
+    <div className="mx-auto max-w-3xl space-y-6 p-4 lg:p-8">
       <div>
         <h1 className="text-3xl font-bold text-black dark:text-white">Pitch Your Music</h1>
         <p className="mt-2 text-zinc-500">
-          Pick your genre & mood, search for curator playlists, preview them on Spotify, then submit.
+          Paste your link. Pick curators. Get placed. It&apos;s that simple.
         </p>
       </div>
 
-      {/* Step 1: Paste Spotify link */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold text-zinc-400">Step 1</h2>
-        <p className="mt-1 text-lg font-medium text-black dark:text-white">Paste your Spotify track link</p>
-        <input
-          type="url"
-          value={spotifyUrl}
-          onChange={(e) => setSpotifyUrl(e.target.value)}
-          placeholder="https://open.spotify.com/track/..."
-          className="mt-4 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none focus:border-black dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white"
-        />
-        <p className="mt-2 text-xs text-zinc-400">Optional — helps us save your track details</p>
+      {/* Progress */}
+      <div className="flex items-center gap-3 text-sm">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex items-center gap-2">
+            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+              step >= s
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-200 text-zinc-500 dark:bg-zinc-800"
+            }`}>
+              {step > s ? "✓" : s}
+            </div>
+            <span className={step >= s ? "text-black dark:text-white font-medium" : "text-zinc-400"}>
+              {s === 1 ? "Paste" : s === 2 ? "Pick Genres" : "Choose Curators"}
+            </span>
+            {s < 3 && <div className="w-8 h-px bg-zinc-300 dark:bg-zinc-700" />}
+          </div>
+        ))}
       </div>
 
-      {/* Step 2: Pick genre + mood */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-sm font-semibold text-zinc-400">Step 2</h2>
-        <p className="mt-1 text-lg font-medium text-black dark:text-white">What&apos;s your song&apos;s genre & mood?</p>
-
-        {/* Moods */}
-        <div className="mt-4">
-          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">Mood</p>
-          <div className="flex flex-wrap gap-2">
-            {MOODS.map((mood) => (
-              <button
-                key={mood.slug}
-                onClick={() => toggleMood(mood.slug)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedMoods.has(mood.slug)
-                    ? "bg-violet-100 text-violet-700 border border-violet-300 dark:bg-violet-900/30 dark:text-violet-400"
-                    : "border border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400"
-                }`}
-              >
-                <span>{mood.icon}</span>
-                <span>{mood.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Genres */}
-        <div className="mt-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Genre {selectedGenres.size > 0 && <span className="text-black dark:text-white">({selectedGenres.size} selected)</span>}
-            </p>
-          </div>
+      {/* Step 1: Paste Spotify Link */}
+      {step === 1 && (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="text-lg font-semibold text-black dark:text-white">Paste your Spotify track link</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            We&apos;ll detect your genre automatically and find matching curators.
+          </p>
           <input
-            type="text"
-            value={genreSearch}
-            onChange={(e) => setGenreSearch(e.target.value)}
-            placeholder="Search genres (e.g. afrobeat, jazz, trap)..."
-            className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-black dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white"
+            type="url"
+            value={spotifyUrl}
+            onChange={(e) => setSpotifyUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && analyzeTrack()}
+            placeholder="https://open.spotify.com/track/..."
+            autoFocus
+            className="mt-4 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400"
           />
-          <div className="mt-3 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-            {filteredGenres.map((genre) => (
-              <button
-                key={genre}
-                onClick={() => toggleGenre(genre)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedGenres.has(genre)
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "border border-zinc-300 text-zinc-600 hover:border-black dark:border-zinc-700 dark:text-zinc-400"
-                }`}
-              >
-                {genre}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          onClick={searchSpotify}
-          disabled={selectedGenres.size === 0 || loading === "search"}
-          className="mt-6 w-full rounded-xl bg-black px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black"
-        >
-          {loading === "search" ? "Searching..." : `Search Curator Playlists`}
-        </button>
-      </div>
-
-      {/* Loading */}
-      {loading === "search" && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="text-2xl">🔍</div>
-          <p className="mt-2 text-sm text-zinc-500">Searching for curator playlists...</p>
+          <button
+            onClick={analyzeTrack}
+            disabled={!spotifyUrl || loading === "search"}
+            className="mt-4 w-full rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {loading === "search" ? "Analyzing..." : "Analyze Track →"}
+          </button>
+          <p className="mt-3 text-center text-xs text-zinc-400">
+            🛡️ Artist Protection: 72h response guarantee on every pitch
+          </p>
         </div>
       )}
 
-      {/* Step 3: Results */}
-      {playlists.length > 0 && (
+      {/* Step 2: Pick Genres */}
+      {step === 2 && (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="text-lg font-semibold text-black dark:text-white">Pick genres for your track</h2>
+          {detectedGenres.length > 0 ? (
+            <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
+              ✓ Detected from your track: {detectedGenres.join(", ")}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-zinc-500">
+              Select genres that match your music
+            </p>
+          )}
+
+          {!customGenres && detectedGenres.length > 0 && (
+            <button
+              onClick={() => { setCustomGenres(true); setSelectedGenres(new Set()); }}
+              className="mt-2 text-xs text-zinc-400 underline hover:text-zinc-600"
+            >
+              Pick different genres
+            </button>
+          )}
+
+          {(customGenres || detectedGenres.length === 0) && (
+            <>
+              <input
+                type="text"
+                value={genreSearch}
+                onChange={(e) => setGenreSearch(e.target.value)}
+                placeholder="Search genres..."
+                className="mt-3 w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-black dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white"
+              />
+              <div className="mt-3 flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                {filteredGenres.map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => toggleGenre(genre)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                      selectedGenres.has(genre)
+                        ? "bg-black text-white dark:bg-white dark:text-black"
+                        : "border border-zinc-300 text-zinc-600 hover:border-black dark:border-zinc-700 dark:text-zinc-400"
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {detectedGenres.length > 0 && !customGenres && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {detectedGenres.map((genre) => (
+                <span
+                  key={genre}
+                  className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                >
+                  ✓ {genre}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => setStep(1)}
+              className="rounded-xl border border-zinc-300 px-5 py-3 text-sm dark:border-zinc-700"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={searchCurators}
+              disabled={selectedGenres.size === 0 || loading === "search"}
+              className="flex-1 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {loading === "search" ? "Searching..." : "Find Curators →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Choose Curators */}
+      {step === 3 && (
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-400">Step 3</h2>
-              <p className="mt-1 text-lg font-medium text-black dark:text-white">
-                Choose playlists to pitch to
-              </p>
+              <h2 className="text-lg font-semibold text-black dark:text-white">Choose curators</h2>
               <p className="text-sm text-zinc-500">
-                {displayedPlaylists.length} of {playlists.length} playlist{playlists.length > 1 ? "s" : ""} shown
+                {playlists.length} matching playlist{playlists.length > 1 ? "s" : ""} found
                 {searchSource === "demo" && (
-                  <span className="ml-2 text-amber-500">(Demo mode — add Spotify credentials for live results)</span>
+                  <span className="ml-2 text-amber-500">(Demo — add Spotify API keys for live results)</span>
                 )}
               </p>
             </div>
             <button
               onClick={toggleAll}
-              className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-medium dark:border-zinc-700"
+              className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium dark:border-zinc-700"
             >
-              {selected.size === displayedPlaylists.length ? "Deselect All" : "Select All"}
+              {selected.size === playlists.length ? "Deselect All" : "Select All"}
             </button>
           </div>
 
-          {/* Price filter */}
-          <div className="mt-4 flex gap-2">
-            {PRICE_FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setPriceFilter(f.key)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  priceFilter === f.key
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Playlist cards */}
           <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto">
-            {displayedPlaylists.map((pl) => (
+            {playlists.map((pl) => (
               <div
                 key={pl.id}
                 onClick={() => togglePlaylist(pl.id)}
                 className={`flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-colors ${
                   selected.has(pl.id)
-                    ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-800"
+                    ? "border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-900/20"
                     : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800"
                 }`}
               >
-                {/* Checkbox */}
                 <div className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                   selected.has(pl.id)
-                    ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                    ? "border-emerald-500 bg-emerald-500 text-white"
                     : "border-zinc-300 dark:border-zinc-700"
                 }`}>
                   {selected.has(pl.id) && <span className="text-xs">✓</span>}
                 </div>
 
-                {/* Image */}
                 {pl.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={pl.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                  <img src={pl.imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
                 ) : (
-                  <div className="h-14 w-14 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xl">
-                    🎵
-                  </div>
+                  <div className="h-12 w-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-lg">🎵</div>
                 )}
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-black dark:text-white truncate">{pl.name}</p>
+                    <p className="font-medium text-black dark:text-white truncate text-sm">{pl.name}</p>
                     <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                       {pl.matchedGenre}
                     </span>
                     {pl.isRegistered && (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                        ✓ Verified Curator
+                        ✓ Verified
                       </span>
                     )}
                     {pl.priceCents === 0 && (
@@ -521,24 +531,14 @@ export default function PitchPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-500 truncate mt-0.5">
-                    by {pl.ownerName} · {formatFollowers(pl.followerCount)} followers
-                    {pl.trackCount > 0 && ` · ${pl.trackCount} tracks`}
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {formatFollowers(pl.followerCount)} followers
                     {pl.totalReviews > 0 && ` · ${pl.totalReviews} reviews`}
                   </p>
-                  {pl.description && (
-                    <p className="mt-1 text-xs text-zinc-400 line-clamp-1">{pl.description}</p>
-                  )}
-                  {pl.onTimeRate > 0 && (
-                    <p className="mt-0.5 text-xs text-zinc-400">
-                      {(pl.onTimeRate * 100).toFixed(0)}% on-time · {pl.responseHours}h response
-                    </p>
-                  )}
                 </div>
 
-                {/* Price + Spotify link */}
-                <div className="shrink-0 flex flex-col items-end gap-2">
-                  <span className={`text-lg font-bold ${
+                <div className="shrink-0 text-right">
+                  <span className={`text-base font-bold ${
                     pl.priceCents === 0 ? "text-blue-600 dark:text-blue-400" : "text-black dark:text-white"
                   }`}>
                     {formatPrice(pl.priceCents)}
@@ -549,9 +549,9 @@ export default function PitchPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="rounded-full bg-[#1DB954] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1ed760]"
+                      className="mt-1 block text-xs text-[#1DB954] hover:underline"
                     >
-                      View on Spotify ↗
+                      Spotify ↗
                     </a>
                   )}
                 </div>
@@ -561,36 +561,51 @@ export default function PitchPage() {
 
           {/* Submit bar */}
           {selected.size > 0 && (
-            <div className="mt-6 flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800">
+            <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-900/20">
               <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  <span className="font-semibold text-black dark:text-white">{selected.size}</span> playlist{selected.size > 1 ? "s" : ""} selected
-                </p>
                 <p className="text-sm font-medium text-black dark:text-white">
-                  Total cost: {totalCost === 0 ? (
-                    <span className="text-blue-600 dark:text-blue-400">FREE</span>
+                  {selected.size} curator{selected.size > 1 ? "s" : ""} selected
+                </p>
+                <p className="text-sm text-zinc-500">
+                  Cost: {totalCost === 0 ? (
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">FREE</span>
                   ) : (
-                    `$${(totalCost / 100).toFixed(2)}`
+                    `$${(totalCost / 100).toFixed(2)} (pay curator directly)`
                   )}
                 </p>
               </div>
               <button
                 onClick={submitPitches}
                 disabled={loading === "search"}
-                className="rounded-full bg-black px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black"
+                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
               >
-                {loading === "search" ? "Submitting..." : `Submit to ${selected.size} Playlist${selected.size > 1 ? "s" : ""}`}
+                {loading === "search" ? "Submitting..." : `Submit to ${selected.size}`}
               </button>
             </div>
           )}
+
+          <button
+            onClick={() => setStep(2)}
+            className="mt-4 text-sm text-zinc-400 underline hover:text-zinc-600"
+          >
+            ← Change genres
+          </button>
         </div>
       )}
 
+      {/* Error */}
       {error && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
+
+      {/* Artist Protection badge */}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-950">
+        <p className="text-sm text-zinc-500">
+          🛡️ <span className="font-medium text-black dark:text-white">Artist Protection</span> — Every pitch has a 72-hour response guarantee. No response = automatic credit refund.
+        </p>
+      </div>
     </div>
   );
 }
