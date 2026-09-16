@@ -77,8 +77,10 @@ export async function verifyTransaction(txRef: string) {
 
 // ── Handle webhook ────────────────────────────────────────────
 export function verifyWebhookSignature(payload: string, signature: string): boolean {
-  // Flutterwave uses HMAC SHA512 with your secret key
-  const hash = crypto.createHmac("sha512", FLW_SECRET).update(payload).digest("hex");
+  // Flutterwave uses HMAC SHA512 with your secret hash (set in dashboard)
+  const secretHash = process.env.FLUTTERWAVE_SECRET_HASH ?? "";
+  if (!secretHash) return false; // no hash configured — reject
+  const hash = crypto.createHmac("sha512", secretHash).update(payload).digest("hex");
   return hash === signature;
 }
 
