@@ -1,0 +1,14 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  --status-primary: #F59E0B;
+  --status-success: #10B981;
+  --status-danger: #EF4444;
+  --status-info: #3B82F6;
+  --radius-card: 1rem;
+}
+
+body {
+  font-family: var(--font-geist-sans);
+}

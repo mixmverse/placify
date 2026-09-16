@@ -1,0 +1,310 @@
+// prisma/schema.prisma
+// Schema matches docs/02 §1.2 structure. Local dev uses sqlite (enums as String).
+// Production Postgres uses native enums per docs/02; swap provider to "postgresql"
+// and set DATABASE_URL to a Postgres connection string.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Auth.js adapter models ────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── Core users ─────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  spotifyUserId String?  @unique
+  isArtist      Boolean  @default(false)
+  isCurator     Boolean  @default(false)
+  creditBalance Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts              Account[]
+  sessions              Session[]
+  artistProfile         ArtistProfile?
+  curatorProfile        CuratorProfile?
+  tracks                Track[]
+  playlists             Playlist[]
+  artistSubmissions     Submission[]      @relation("ArtistSubmissions")
+  curatorSubmissions    Submission[]      @relation("CuratorSubmissions")
+  curatorGenrePrefs     CuratorGenrePref[]
+  ledgerEntries         CreditLedger[]    @relation("LedgerForUser")
+  subscriptions         Subscription[]
+  creditPacks           CreditPack[]
+  earnings              CuratorEarnings[] @relation("CuratorEarnings")
+  payouts               Payout[]          @relation("CuratorPayouts")
+  notifications         Notification[]
+}
+
+model ArtistProfile {
+  userId          String  @id
+  user            User    @relation(fields: [userId], references: [id])
+  artistName      String
+  spotifyArtistId String? @unique
+  bio             String?
+  avatarUrl       String?
+}
+
+model CuratorProfile {
+  userId          String  @id
+  user            User    @relation(fields: [userId], references: [id])
+  displayName     String
+  bio             String?
+  avatarUrl       String?
+  responseHours   Int     @default(72)
+  verified        Boolean @default(false)
+  totalReviews    Int     @default(0)
+  onTimeReviews   Int     @default(0)
+  missedDeadlines Int     @default(0)
+  retentionPoints Int     @default(0)
+  priceCents      Int     @default(0)  // 0 = free, otherwise cents per submission
+  paymentMethod   String?  // "paypal", "stripe", "cashapp", "venmo", etc.
+  paymentInfo     String?  // PayPal email, Stripe link, CashApp tag, etc.
+}
+
+// ── Catalog ──────────────────────────────────────────────────────
+
+model Genre {
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  name              String
+  trackGenres       TrackGenre[]
+  playlistGenres    PlaylistGenre[]
+  curatorGenrePrefs CuratorGenrePref[]
+}
+
+model Track {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  spotifyTrackId String
+  title          String
+  artistName     String
+  artworkUrl     String?
+  durationMs     Int
+  createdAt      DateTime     @default(now())
+
+  genres      TrackGenre[]
+  submissions Submission[]
+
+  @@unique([userId, spotifyTrackId])
+}
+
+model TrackGenre {
+  trackId String
+  track   Track @relation(fields: [trackId], references: [id])
+  genreId String
+  genre   Genre @relation(fields: [genreId], references: [id])
+
+  @@id([trackId, genreId])
+}
+
+model Playlist {
+  id                String         @id @default(cuid())
+  curatorUserId     String
+  curatorUser       User           @relation(fields: [curatorUserId], references: [id])
+  spotifyPlaylistId String         @unique
+  name              String
+  description       String?
+  thumbnailUrl      String?
+  followerCount     Int            @default(0)
+  isVerified        Boolean        @default(false)
+  verifiedAt        DateTime?
+  lastCheckedAt     DateTime       @default(now())
+  status            String         @default("UNDER_REVIEW")
+
+  genres      PlaylistGenre[]
+  submissions Submission[]
+
+  @@index([status, followerCount])
+}
+
+model PlaylistGenre {
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  genreId    String
+  genre      Genre  @relation(fields: [genreId], references: [id])
+
+  @@id([playlistId, genreId])
+}
+
+model CuratorGenrePref {
+  curatorUserId String
+  curatorUser   User   @relation(fields: [curatorUserId], references: [id])
+  genreId       String
+  genre         Genre  @relation(fields: [genreId], references: [id])
+
+  @@id([curatorUserId, genreId])
+}
+
+// ── Submissions ──────────────────────────────────────────────────
+
+model Submission {
+  id            String   @id @default(cuid())
+  trackId       String
+  track         Track    @relation(fields: [trackId], references: [id])
+  playlistId    String
+  playlist      Playlist @relation(fields: [playlistId], references: [id])
+
+  artistUserId  String
+  artistUser    User     @relation("ArtistSubmissions", fields: [artistUserId], references: [id])
+  curatorUserId String
+  curatorUser   User     @relation("CuratorSubmissions", fields: [curatorUserId], references: [id])
+
+  status      String   @default("PENDING")
+  message     String?
+  feedbackText String?
+  createdAt   DateTime @default(now())
+  deadlineAt  DateTime
+  decidedAt   DateTime?
+
+  ledgerEntries CreditLedger[] @relation("LedgerForSubmission")
+
+  @@index([status, deadlineAt])
+  @@index([artistUserId, createdAt])
+  @@index([curatorUserId, status])
+}
+
+// Partial unique: one active (PENDING) pitch per track/playlist.
+// Add via raw migration after first migrate dev:
+//   CREATE UNIQUE INDEX submissions_one_active_pitch
+//   ON submissions (track_id, playlist_id) WHERE status = 'PENDING';
+
+// ── Credits & billing ────────────────────────────────────────────
+
+model CreditLedger {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation("LedgerForUser", fields: [userId], references: [id])
+  delta        Int
+  reason       String
+  balanceAfter Int
+  submissionId String?
+  submission   Submission? @relation("LedgerForSubmission", fields: [submissionId], references: [id])
+  stripeRef    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  stripeSubscriptionId String   @unique
+  plan                 String
+  monthlyCredits       Int
+  priceCents           Int
+  status               String   @default("ACTIVE")
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model CreditPack {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  credits         Int
+  priceCents      Int
+  stripePaymentId String?  @unique
+  createdAt       DateTime @default(now())
+}
+
+// ── Curator economy ──────────────────────────────────────────────
+
+model CuratorEarnings {
+  id              String   @id @default(cuid())
+  curatorUserId   String
+  curatorUser     User     @relation("CuratorEarnings", fields: [curatorUserId], references: [id])
+  periodYear      Int
+  periodMonth     Int
+  amountCents     Int
+  status          String   @default("PENDING")
+  reviewsCount    Int      @default(0)
+  onTimeRate      Float    @default(0)
+  retentionPoints Int      @default(0)
+
+  @@unique([curatorUserId, periodYear, periodMonth])
+}
+
+model Payout {
+  id             String   @id @default(cuid())
+  curatorUserId  String
+  curatorUser    User     @relation("CuratorPayouts", fields: [curatorUserId], references: [id])
+  amountCents    Int
+  method         String   @default("stripe_connect")
+  stripePayoutId String?  @unique
+  status         String   @default("PROCESSING")
+  createdAt      DateTime @default(now())
+  processedAt    DateTime?
+
+  @@index([curatorUserId, status])
+}
+
+// ── Notifications & audit ────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  payload   String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+}
+
+model AdminEvent {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetType  String
+  targetId    String
+  meta        String?
+  createdAt   DateTime @default(now())
+}
