@@ -495,6 +495,7 @@ export default function PitchPage() {
 
                 {/* Image */}
                 {pl.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={pl.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
                 ) : (
                   <div className="h-14 w-14 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xl">

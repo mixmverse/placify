@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockGetTrack = vi.fn();
 const mockGetArtist = vi.fn();
 const mockGetPlaylist = vi.fn();
-const mockGetPlaylistFollowers = vi.fn();
 const mockSearchPlaylists = vi.fn();
 const mockClientCredentialsGrant = vi.fn();
 const mockSetAccessToken = vi.fn();
@@ -15,14 +14,13 @@ vi.mock("spotify-web-api-node", () => ({
     getTrack = mockGetTrack;
     getArtist = mockGetArtist;
     getPlaylist = mockGetPlaylist;
-    getPlaylistFollowers = mockGetPlaylistFollowers;
     searchPlaylists = mockSearchPlaylists;
     clientCredentialsGrant = mockClientCredentialsGrant;
     setAccessToken = mockSetAccessToken;
   },
 }));
 
-// Set credentials so hasSpotifyCreds() returns true
+// Set credentials so hasCreds returns true
 process.env.SPOTIFY_CLIENT_ID = "test-id";
 process.env.SPOTIFY_CLIENT_SECRET = "test-secret";
 
@@ -70,10 +68,11 @@ describe("spotify", () => {
   describe("verifyPlaylist", () => {
     it("returns verified for playlists with 50+ followers", async () => {
       mockGetPlaylist.mockResolvedValue({
-        body: { name: "Cool Playlist" },
-      });
-      mockGetPlaylistFollowers.mockResolvedValue({
-        body: { followers: { total: 500 } },
+        body: {
+          name: "Cool Playlist",
+          followers: { total: 500 },
+          tracks: { items: [] },
+        },
       });
 
       const result = await verifyPlaylist("playlist-1", "curator-1");
@@ -86,10 +85,11 @@ describe("spotify", () => {
 
     it("returns rejected for playlists with fewer than 50 followers", async () => {
       mockGetPlaylist.mockResolvedValue({
-        body: { name: "Tiny Playlist" },
-      });
-      mockGetPlaylistFollowers.mockResolvedValue({
-        body: { followers: { total: 10 } },
+        body: {
+          name: "Tiny Playlist",
+          followers: { total: 10 },
+          tracks: { items: [] },
+        },
       });
 
       const result = await verifyPlaylist("playlist-2", "curator-2");
@@ -110,8 +110,9 @@ describe("spotify", () => {
                 name: "Indie Hits",
                 description: "Best indie tracks",
                 followers: { total: 1200 },
-                owner: { display_name: "DJ Indie", id: "owner-1" },
+                owner: { display_name: "DJ Indie" },
                 images: [{ url: "https://example.com/img.jpg" }],
+                external_urls: { spotify: "https://open.spotify.com/playlist/pl-1" },
               },
             ],
           },

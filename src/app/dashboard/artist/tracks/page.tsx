@@ -87,6 +87,7 @@ export default function TracksPage() {
             <div key={t.id} className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:bg-zinc-950">
               <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800">
                 {t.artworkUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={t.artworkUrl} alt={t.title} className="h-12 w-12 rounded-lg object-cover" />
                 )}
               </div>
