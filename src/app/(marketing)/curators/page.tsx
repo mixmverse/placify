@@ -60,28 +60,22 @@ async function getCurators() {
     }));
 
   // Fetch real Spotify artwork for playlists that don't have a thumbnail in DB
-  // Limit to first 100 playlists to keep page load fast
+  // Fetch ALL playlists in batches of 30 to avoid rate limits
   const playlistFetches: Promise<void>[] = [];
-  let fetchCount = 0;
 
   for (const curator of curators) {
     for (const playlist of curator.playlists) {
       if (playlist.thumbnailUrl || !playlist.spotifyPlaylistId) continue;
-      if (fetchCount >= 100) break; // cap at 100 fetches to avoid rate limits
-
-      fetchCount++;
       playlistFetches.push(
         fetchPlaylistThumbnail(playlist.spotifyPlaylistId).then((url) => {
           if (url) playlist.thumbnailUrl = url;
         })
       );
     }
-    if (fetchCount >= 100) break;
   }
 
-  // Fetch in batches of 20 to avoid overwhelming Spotify
-  for (let i = 0; i < playlistFetches.length; i += 20) {
-    await Promise.all(playlistFetches.slice(i, i + 20));
+  for (let i = 0; i < playlistFetches.length; i += 30) {
+    await Promise.all(playlistFetches.slice(i, i + 30));
   }
 
   return curators;
