@@ -3,10 +3,17 @@ import stripe from "stripe";
 import db from "./db";
 import { grantCredits } from "./credits";
 
-const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY ?? "");
+let stripeClient: stripe | null = null;
+
+function getStripeClient(): stripe {
+  if (!stripeClient) {
+    stripeClient = new stripe(process.env.STRIPE_SECRET_KEY ?? "");
+  }
+  return stripeClient;
+}
 
 export async function createCheckoutSession(userId: string, priceCents: number, plan: string) {
-  const session = await stripeClient.checkout.sessions.create({
+  const session = await getStripeClient().checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [
       {
@@ -30,7 +37,7 @@ export async function handleStripeWebhook(payload: Buffer, signature: string) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
   let event: stripe.Event;
   try {
-    event = stripeClient.webhooks.constructEvent(payload, signature, webhookSecret);
+    event = getStripeClient().webhooks.constructEvent(payload, signature, webhookSecret);
   } catch {
     throw new Error("Invalid Stripe signature");
   }
@@ -90,7 +97,7 @@ export async function handleStripeWebhook(payload: Buffer, signature: string) {
 }
 
 export async function createPortalSession(userId: string) {
-  const session = await stripeClient.billingPortal.sessions.create({
+  const session = await getStripeClient().billingPortal.sessions.create({
     customer: userId,
     return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/artist/credits`,
   });

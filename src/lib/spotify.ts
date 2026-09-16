@@ -94,8 +94,7 @@ export async function verifyPlaylist(
     await ensureToken();
     const client = getSpotifyClient();
     const { body: playlist } = await client.getPlaylist(spotifyPlaylistId);
-    const { body: followers } = await client.getPlaylistFollowers(spotifyPlaylistId);
-    const followerCount = followers.followers.total;
+    const followerCount = playlist.followers.total;
 
     if (followerCount >= 50) {
       return { name: playlist.name, followerCount, verified: true, status: "ACTIVE" };
@@ -113,8 +112,8 @@ export async function checkPlaylistRetention(spotifyPlaylistId: string, trackId:
   try {
     await ensureToken();
     const client = getSpotifyClient();
-    const { body } = await client.getPlaylistTracks(spotifyPlaylistId, { limit: 100 });
-    return body.items.some((item: { track?: { id?: string } | null }) => item.track?.id === trackId);
+    const { body } = await client.getPlaylist(spotifyPlaylistId);
+    return body.tracks.items.some((item) => item.track?.id === trackId);
   } catch {
     return false;
   }
