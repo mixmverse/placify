@@ -94,7 +94,7 @@ model CuratorProfile {
   displayName     String
   bio             String?
   avatarUrl       String?
-  responseHours   Int     @default(72)
+  responseHours   Int     @default(168)
   verified        Boolean @default(false)
   totalReviews    Int     @default(0)
   onTimeReviews   Int     @default(0)

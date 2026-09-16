@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const curator = await db.curatorProfile.findUnique({
     where: { userId: playlist.curatorUserId },
   });
-  const responseHours = curator?.responseHours ?? 72;
+  const responseHours = curator?.responseHours ?? 168;
   const hasFee = curator && curator.priceCents > 0;
 
   try {

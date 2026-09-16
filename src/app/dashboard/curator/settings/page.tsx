@@ -25,7 +25,7 @@ export default function CuratorSettingsPage() {
     displayName: "",
     bio: "",
     priceCents: 0,
-    responseHours: 72,
+    responseHours: 168,
     paymentMethod: "paypal",
     paymentInfo: "",
   });
@@ -42,7 +42,7 @@ export default function CuratorSettingsPage() {
           displayName: data.displayName ?? "",
           bio: data.bio ?? "",
           priceCents: data.priceCents ?? 0,
-          responseHours: data.responseHours ?? 72,
+          responseHours: data.responseHours ?? 168,
           paymentMethod: data.paymentMethod ?? "paypal",
           paymentInfo: data.paymentInfo ?? "",
         });
@@ -141,9 +141,9 @@ export default function CuratorSettingsPage() {
             onChange={(e) => setProfile({ ...profile, responseHours: Number(e.target.value) })}
             className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-black dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white"
           >
-            <option value={24}>24 hours</option>
-            <option value={48}>48 hours</option>
-            <option value={72}>72 hours (default)</option>
+            <option value={72}>3 days</option>
+            <option value={120}>5 days</option>
+            <option value={168}>7 days (default)</option>
           </select>
         </div>
       </div>

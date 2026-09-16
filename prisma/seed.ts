@@ -154,7 +154,7 @@ async function main() {
     create: {
       email: "curator@example.com",
       isCurator: true,
-      curatorProfile: { create: { displayName: "Demo Curator", responseHours: 72 } },
+      curatorProfile: { create: { displayName: "Demo Curator", responseHours: 168 } },
     },
   });
   console.log(`✓ Demo curator: ${curator.email}`);

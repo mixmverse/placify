@@ -100,7 +100,7 @@ export async function POST(request: Request) {
           curatorUserId,
           status: hasFee ? "AWAITING_PAYMENT" : "PENDING",
           message: null,
-          deadlineAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+          deadlineAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
         },
       });
       submissions.push({

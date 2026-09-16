@@ -12,7 +12,7 @@ const FAQ_DATA: Record<Tab, { q: string; a: string }[]> = {
     { q: "Can I switch roles later?", a: "Yes. You can add the second role later and switch between artist and curator views from the same account when both profiles are enabled." },
     { q: "Where can I track submission status and feedback?", a: "You can track submission status from your dashboard, including pending, reviewed, and outcome states. Any curator feedback appears directly on the submission record." },
     { q: "What genres are supported?", a: "Placify supports a wide range of genres and subgenres so artists can target better-fit curators. You can filter by genre during submission and curators can set genre preferences." },
-    { q: "What happens if a curator doesn't respond?", a: "If a curator doesn't respond within 72 hours, your submission credit is automatically refunded and the curator doesn't get paid." },
+    { q: "What happens if a curator doesn't respond?", a: "If a curator doesn't respond within 7 days, your submission credit is automatically refunded and the curator doesn't get paid." },
     { q: "What if I need help with billing?", a: "You can contact support from the Help/Contact flow, and our team can assist with billing, account questions, and submission-related issues." },
   ],
   artists: [
@@ -21,7 +21,7 @@ const FAQ_DATA: Record<Tab, { q: string; a: string }[]> = {
     { q: "Can I pitch the same track to multiple curators?", a: "Yes. Each credit is one pitch to one curator. You can pitch one track to as many curators as you have credits for." },
     { q: "What happens if I run out of credits?", a: "You can purchase additional credits or upgrade your plan at any time. Extra credits are as low as $0.30 each." },
     { q: "What do I need to submit a track?", a: "A valid Spotify track link. We verify it against Spotify's API to ensure it's a real, playable track." },
-    { q: "How fast will I hear back?", a: "Curators aim to respond within 72 hours. If they miss the deadline, your credit is automatically refunded." },
+    { q: "How fast will I hear back?", a: "Curators aim to respond within 7 days. If they miss the deadline, your credit is automatically refunded." },
   ],
   curators: [
     { q: "Is it really free?", a: "Yes. No subscription, no credit card, ever. You can list unlimited playlists and earn from the monthly revenue pool." },
@@ -29,7 +29,7 @@ const FAQ_DATA: Record<Tab, { q: string; a: string }[]> = {
     { q: "What's the minimum payout?", a: "Monthly distributions below $5.00 roll forward into your pending balance until they cross that threshold, then release to your available balance." },
     { q: "What are the requirements?", a: "At least one playlist with 50+ real followers. No bots, no fake playlists. We verify playlist authenticity." },
     { q: "How many playlists can I list?", a: "Unlimited. As long as each meets the 50+ follower requirement." },
-    { q: "What if I don't respond in time?", a: "If you miss the 72-hour window, the artist gets their credit back and you don't receive payment for that submission." },
+    { q: "What if I don't respond in time?", a: "If you miss the 7-day window, the artist gets their credit back and you don't receive payment for that submission." },
   ],
 };
 

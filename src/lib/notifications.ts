@@ -46,5 +46,5 @@ export function submissionDecidedEmail(outcome: string, feedback: string) {
 }
 
 export function creditsRefundedEmail(submissionId: string) {
-  return { subject: "Pitch expired — credit refunded", body: `Your pitch ${submissionId} exceeded the 72h window. 1 credit has been refunded.` };
+  return { subject: "Pitch expired — credit refunded", body: `Your pitch ${submissionId} exceeded the 7-day window. 1 credit has been refunded.` };
 }

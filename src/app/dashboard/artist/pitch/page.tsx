@@ -231,7 +231,7 @@ export default function PitchPage() {
             Your track has been sent to {submissionResults.length} curator{submissionResults.length > 1 ? "s" : ""}.
           </p>
           <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-            🛡️ Artist Protection active — 72h response guarantee
+            🛡️ Artist Protection active — 7-day response guarantee
           </p>
         </div>
 
@@ -241,7 +241,7 @@ export default function PitchPage() {
               ✓ {freeSubs.length} free curator{freeSubs.length > 1 ? "s" : ""} — reviewing now
             </h3>
             <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-500">
-              These curators will review within 72 hours. No payment needed.
+              These curators will review within 7 days. No payment needed.
             </p>
           </div>
         )}
@@ -303,7 +303,7 @@ export default function PitchPage() {
         <div className="text-center">
           <p className="text-sm text-zinc-500 mb-4">
             {allPaid || paidSubs.length === 0
-              ? "All done! Curators will review within 72 hours."
+              ? "All done! Curators will review within 7 days."
               : "Pay curators above, then check your Submissions page for updates."}
           </p>
           <button
@@ -381,7 +381,7 @@ export default function PitchPage() {
             {loading === "search" ? "Analyzing..." : "Analyze Track →"}
           </button>
           <p className="mt-3 text-center text-xs text-zinc-400">
-            🛡️ Artist Protection: 72h response guarantee on every pitch
+            🛡️ Artist Protection: 7-day response guarantee on every pitch
           </p>
         </div>
       )}
@@ -603,7 +603,7 @@ export default function PitchPage() {
       {/* Artist Protection badge */}
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-950">
         <p className="text-sm text-zinc-500">
-          🛡️ <span className="font-medium text-black dark:text-white">Artist Protection</span> — Every pitch has a 72-hour response guarantee. No response = automatic credit refund.
+          🛡️ <span className="font-medium text-black dark:text-white">Artist Protection</span> — Every pitch has a 7-day response guarantee. No response = automatic credit refund.
         </p>
       </div>
     </div>

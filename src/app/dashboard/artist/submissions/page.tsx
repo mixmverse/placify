@@ -214,7 +214,7 @@ export default function SubmissionsPage() {
               {s.status === "PAID" && (
                 <div className="mt-3 ml-9 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/10">
                   <p className="text-sm text-blue-700 dark:text-blue-400">
-                    💳 Payment confirmed — curator will review within 72 hours
+                    💳 Payment confirmed — curator will review within 7 days
                   </p>
                 </div>
               )}
@@ -258,7 +258,7 @@ export default function SubmissionsPage() {
               {s.status === "EXPIRED" && (
                 <div className="mt-3 ml-9 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800">
                   <p className="text-sm text-zinc-500">
-                    ⏰ Curator didn&apos;t respond within 72 hours. Credit refunded.
+                    ⏰ Curator didn&apos;t respond within 7 days. Credit refunded.
                   </p>
                 </div>
               )}
