@@ -15,7 +15,8 @@ function getSpotifyClient(): SpotifyApi {
   return _spotify;
 }
 
-const MIN_FOLLOWERS = 100;
+const MIN_FOLLOWERS_DB = 10;   // DB curators: show even small playlists
+const MIN_FOLLOWERS_SPOTIFY = 100;  // Spotify results: filter out tiny playlists
 
 // GET /api/curators/search-spotify?genres=afrobeat,hip-hop&limit=30
 export async function GET(request: Request) {
@@ -118,49 +119,29 @@ async function getDbCurators(genres: string[]): Promise<SpotifyPlaylist[]> {
       .map((g) => g.genre.slug)
       .filter((slug) => genres.includes(slug));
 
-    // If curators has playlists, show each one
-    if (u.playlists.length > 0) {
-      for (const pl of u.playlists) {
-        if (pl.followerCount < MIN_FOLLOWERS) continue;
-        results.push({
-          id: `db-${pl.id}`,
-          name: pl.name,
-          description: u.curatorProfile.bio ?? `Curator by ${u.curatorProfile.displayName}`,
-          imageUrl: pl.thumbnailUrl,
-          followerCount: pl.followerCount,
-          trackCount: 0,
-          ownerName: u.curatorProfile.displayName,
-          spotifyUrl: `https://open.spotify.com/playlist/${pl.spotifyPlaylistId}`,
-          matchedGenre: matchingGenres[0] ?? genres[0],
-          isOwn: true,
-          isRegistered: true,
-          priceCents: u.curatorProfile.priceCents,
-          responseHours: u.curatorProfile.responseHours,
-          totalReviews: u.curatorProfile.totalReviews,
-          onTimeRate: u.curatorProfile.totalReviews > 0
-            ? u.curatorProfile.onTimeReviews / u.curatorProfile.totalReviews
-            : 0,
-          curatorUserId: u.id,
-        });
-      }
-    } else {
-      // Curator with no playlists yet — still show them
+    // Skip curators with no playlists — they're not pitchable
+    if (u.playlists.length === 0) continue;
+
+    for (const pl of u.playlists) {
+      if (pl.followerCount < MIN_FOLLOWERS_DB) continue;
       results.push({
-        id: `db-${u.id}`,
-        name: u.curatorProfile.displayName,
-        description: u.curatorProfile.bio ?? "",
-        imageUrl: u.curatorProfile.avatarUrl,
-        followerCount: 0,
+        id: `db-${pl.id}`,
+        name: pl.name,
+        description: u.curatorProfile.bio ?? `Curator by ${u.curatorProfile.displayName}`,
+        imageUrl: pl.thumbnailUrl,
+        followerCount: pl.followerCount,
         trackCount: 0,
         ownerName: u.curatorProfile.displayName,
-        spotifyUrl: "",
+        spotifyUrl: `https://open.spotify.com/playlist/${pl.spotifyPlaylistId}`,
         matchedGenre: matchingGenres[0] ?? genres[0],
         isOwn: true,
         isRegistered: true,
         priceCents: u.curatorProfile.priceCents,
         responseHours: u.curatorProfile.responseHours,
         totalReviews: u.curatorProfile.totalReviews,
-        onTimeRate: 0,
+        onTimeRate: u.curatorProfile.totalReviews > 0
+          ? u.curatorProfile.onTimeReviews / u.curatorProfile.totalReviews
+          : 0,
         curatorUserId: u.id,
       });
     }
@@ -197,7 +178,7 @@ async function searchSpotifyLive(genres: string[], limit: number): Promise<Spoti
         const plAny = pl as unknown as Record<string, unknown>;
         const tracks = (plAny.tracks as { total?: number } | undefined) ?? undefined;
 
-        if (followerCount < MIN_FOLLOWERS) continue;
+        if (followerCount < MIN_FOLLOWERS_SPOTIFY) continue;
         if (!tracks?.total || tracks.total === 0) continue;
 
         // Determine price based on follower count (smaller = cheaper)
