@@ -1,11 +1,12 @@
 // src/lib/spotify.ts
-import { SpotifyApi } from "spotify-web-api-node";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const SpotifyWebApi = require("spotify-web-api-node");
 
-let spotify: SpotifyApi | null = null;
+let spotify: ReturnType<typeof SpotifyWebApi> | null = null;
 
-function getSpotifyClient(): SpotifyApi {
+function getSpotifyClient(): ReturnType<typeof SpotifyWebApi> {
   if (!spotify) {
-    spotify = new SpotifyApi({
+    spotify = new SpotifyWebApi({
       clientId: process.env.SPOTIFY_CLIENT_ID ?? "",
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET ?? "",
     });
@@ -113,7 +114,7 @@ export async function checkPlaylistRetention(spotifyPlaylistId: string, trackId:
     await ensureToken();
     const client = getSpotifyClient();
     const { body } = await client.getPlaylist(spotifyPlaylistId);
-    return body.tracks.items.some((item) => item.track?.id === trackId);
+    return body.tracks.items.some((item: { track?: { id?: string } }) => item.track?.id === trackId);
   } catch {
     return false;
   }
