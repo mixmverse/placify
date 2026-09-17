@@ -37,6 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
+      // On initial sign-in, populate all fields
       if (user) {
         const dbUser = await db.user.findUnique({
           where: { id: user.id },
@@ -49,9 +50,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.email = dbUser.email;
           token.country = dbUser.country;
         }
-        // Check if artist profile exists
         const profile = await db.artistProfile.findUnique({ where: { userId: user.id } });
         token.hasArtistProfile = !!profile;
+      }
+      // On every request: refresh isArtist + hasArtistProfile from DB
+      // (onboarding may have changed these since last token)
+      if (token.email) {
+        const dbUser = await db.user.findUnique({
+          where: { email: token.email as string },
+          select: { id: true, isArtist: true, isCurator: true, country: true },
+        });
+        if (dbUser) {
+          token.isArtist = dbUser.isArtist;
+          token.isCurator = dbUser.isCurator;
+          token.country = dbUser.country;
+          const profile = await db.artistProfile.findUnique({ where: { userId: dbUser.id } });
+          token.hasArtistProfile = !!profile;
+        }
       }
       return token;
     },
