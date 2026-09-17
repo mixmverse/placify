@@ -2,7 +2,11 @@
 // React email template for pitch notifications sent to curators
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "");
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 
 interface PitchEmailData {
   submissionId: string;
@@ -169,7 +173,8 @@ function PitchEmail({
 }
 
 export async function sendPitchEmail(data: PitchEmailData) {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
 
   try {
     await resend.emails.send({
