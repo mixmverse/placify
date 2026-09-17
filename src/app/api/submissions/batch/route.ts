@@ -226,6 +226,7 @@ export async function POST(request: Request) {
     submitted: submissions.length,
     creditsUsed,
     trackId: track.id,
+    submissions,
     invitedCurators,
   });
 }
