@@ -87,23 +87,23 @@ export async function POST(request: Request) {
 
     const hasFee = curatorProfile && curatorProfile.priceCents > 0;
 
+    // Spend exactly 1 credit per curator (not per playlist)
+    try {
+      await spendCredit(userId);
+      creditsUsed++;
+    } catch {
+      return NextResponse.json({
+        error: `Ran out of credits after ${creditsUsed} curator${creditsUsed !== 1 ? "s" : ""}`,
+        submitted: submissions.length,
+      }, { status: 400 });
+    }
+
     for (const playlist of playlists) {
       // Check for existing active submission to this playlist
       const existing = await db.submission.findFirst({
         where: { trackId: track.id, playlistId: playlist.id, status: { in: ["PENDING", "AWAITING_PAYMENT", "PAID"] } },
       });
       if (existing) continue;
-
-      // Spend one credit per submission
-      try {
-        await spendCredit(userId);
-        creditsUsed++;
-      } catch {
-        return NextResponse.json({
-          error: `Ran out of credits after ${creditsUsed} submissions`,
-          submitted: submissions.length,
-        }, { status: 400 });
-      }
 
       const submission = await db.submission.create({
         data: {
