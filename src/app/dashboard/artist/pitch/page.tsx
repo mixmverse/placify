@@ -92,16 +92,16 @@ export default function PitchPage() {
       const res = await fetch(`/api/tracks/analyze?trackId=${trackId}`);
       const data = await res.json();
       const track = data.track ?? null;
-      const genres = track?.genres ?? data.genres ?? [];
-      setDetectedGenres(genres);
-      setSelectedGenres(new Set(genres));
+      // Don't auto-select genres — artist picks manually
+      setDetectedGenres(track?.genres ?? data.genres ?? []);
+      setSelectedGenres(new Set());
       setTrackInfo(track ? { title: track.title, artistName: track.artistName } : null);
       setStep(2);
     } catch {
-      setError("Could not analyze track. You can pick genres manually below.");
+      setError("Could not load track. You can pick genres manually below.");
       setDetectedGenres([]);
       setSelectedGenres(new Set());
-      setCustomGenres(true);
+      setTrackInfo(null);
       setStep(2);
     } finally {
       setLoading(null);
@@ -226,7 +226,9 @@ export default function PitchPage() {
     .filter((p) => selected.has(p.id) && p.priceCents === 0)
     .length;
 
-  const hasEnoughCredits = creditBalance === null || selectedPaidCount <= creditBalance;
+  // Every curator costs 1 credit, regardless of price
+  const creditsNeeded = selected.size;
+  const hasEnoughCredits = creditBalance === null || creditsNeeded <= creditBalance;
 
   const STEP_LABELS = ["Paste", "Pick Genres", "Choose Curators"];
 
@@ -382,7 +384,7 @@ export default function PitchPage() {
 
           <h2 className="text-lg font-semibold text-white">Paste your Spotify track link</h2>
           <p className="mt-1 text-sm text-white/40">
-            We&apos;ll detect your genre automatically and find matching curators.
+            We&apos;ll load your track info. You pick the genres and curators.
           </p>
           <input
             type="url"
@@ -418,62 +420,64 @@ export default function PitchPage() {
         <div className="relative rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent rounded-t-2xl" />
 
-          <h2 className="text-lg font-semibold text-white">Pick genres for your track</h2>
-          {detectedGenres.length > 0 ? (
-            <p className="mt-1 text-sm text-emerald-400">
-              ✓ Detected from your track: {detectedGenres.join(", ")}
-            </p>
-          ) : (
-            <p className="mt-1 text-sm text-white/40">Select genres that match your music</p>
-          )}
-
-          {!customGenres && detectedGenres.length > 0 && (
-            <button
-              onClick={() => { setCustomGenres(true); setSelectedGenres(new Set()); }}
-              className="mt-2 text-xs text-white/30 underline hover:text-white/50"
-            >
-              Pick different genres
-            </button>
-          )}
-
-          {(customGenres || detectedGenres.length === 0) && (
-            <>
-              <input
-                type="text"
-                value={genreSearch}
-                onChange={(e) => setGenreSearch(e.target.value)}
-                placeholder="Search genres..."
-                className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-              />
-              <div className="mt-3 flex max-h-48 flex-wrap gap-2 overflow-y-auto">
-                {filteredGenres.map((genre) => (
-                  <button
-                    key={genre}
-                    onClick={() => toggleGenre(genre)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                      selectedGenres.has(genre)
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-lg shadow-emerald-500/10"
-                        : "border border-white/10 text-white/50 hover:border-white/20 hover:text-white/70"
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
+          {trackInfo && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-lg">🎵</div>
+              <div>
+                <p className="text-sm font-medium text-white">{trackInfo.title}</p>
+                <p className="text-xs text-white/40">{trackInfo.artistName}</p>
               </div>
-            </>
+              <a
+                href={spotifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto text-xs text-[#1DB954]/70 hover:text-[#1DB954]"
+              >
+                Open in Spotify ↗
+              </a>
+            </div>
           )}
 
-          {detectedGenres.length > 0 && !customGenres && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {detectedGenres.map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-full bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 border border-emerald-500/20"
-                >
-                  ✓ {genre}
-                </span>
-              ))}
-            </div>
+          <h2 className="text-lg font-semibold text-white">Pick genres for your track</h2>
+          <p className="mt-1 text-sm text-white/40">
+            Select genres that match your music — these help us find the right curators for you.
+          </p>
+          {detectedGenres.length > 0 && (
+            <p className="mt-1 text-xs text-white/30">
+              Tip: your track may fit genres like {detectedGenres.join(", ")}
+            </p>
+          )}
+
+          <input
+            type="text"
+            value={genreSearch}
+            onChange={(e) => setGenreSearch(e.target.value)}
+            placeholder="Search genres..."
+            className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+          />
+          <div className="mt-3 flex max-h-48 flex-wrap gap-2 overflow-y-auto">
+            {filteredGenres.map((genre) => (
+              <button
+                key={genre}
+                onClick={() => toggleGenre(genre)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  selectedGenres.has(genre)
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-lg shadow-emerald-500/10"
+                    : detectedGenres.includes(genre)
+                      ? "border border-emerald-500/20 text-emerald-400/60 hover:border-emerald-500/40 hover:text-emerald-400"
+                      : "border border-white/10 text-white/50 hover:border-white/20 hover:text-white/70"
+                }`}
+              >
+                {detectedGenres.includes(genre) && !selectedGenres.has(genre) ? "✦ " : ""}
+                {genre}
+              </button>
+            ))}
+          </div>
+
+          {selectedGenres.size > 0 && (
+            <p className="mt-3 text-xs text-emerald-400/60">
+              ✓ {selectedGenres.size} genre{selectedGenres.size > 1 ? "s" : ""} selected
+            </p>
           )}
 
           <div className="mt-6 flex gap-3">
@@ -514,6 +518,7 @@ export default function PitchPage() {
                 {searchSource === "demo" && (
                   <span className="ml-2 text-amber-400/60">(Demo — add Spotify API keys for live results)</span>
                 )}
+                <span className="ml-2 text-white/30">· Each curator costs 1 credit</span>
               </p>
             </div>
             <button
@@ -528,19 +533,21 @@ export default function PitchPage() {
             {playlists.map((pl) => (
               <div
                 key={pl.id}
-                onClick={() => togglePlaylist(pl.id)}
-                className={`flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-all ${
+                className={`flex items-start gap-4 rounded-xl border p-4 transition-all ${
                   selected.has(pl.id)
                     ? "border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5"
                     : "border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                 }`}
               >
                 {/* Checkbox */}
-                <div className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
-                  selected.has(pl.id)
-                    ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                    : "border-white/20"
-                }`}>
+                <div
+                  onClick={() => togglePlaylist(pl.id)}
+                  className={`mt-1 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border transition-all ${
+                    selected.has(pl.id)
+                      ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                      : "border-white/20"
+                  }`}
+                >
                   {selected.has(pl.id) && <span className="text-xs">✓</span>}
                 </div>
 
@@ -573,27 +580,30 @@ export default function PitchPage() {
                   <p className="mt-0.5 text-xs text-white/30">
                     {formatFollowers(pl.followerCount)} followers
                     {pl.totalReviews > 0 && ` · ${pl.totalReviews} reviews`}
+                    {pl.priceCents > 0 && ` · ${formatPrice(pl.priceCents)} submission fee`}
                   </p>
-                </div>
-
-                {/* Price + Link */}
-                <div className="shrink-0 text-right">
-                  <span className={`text-base font-bold ${
-                    pl.priceCents === 0 ? "text-blue-400" : "text-white"
-                  }`}>
-                    {formatPrice(pl.priceCents)}
-                  </span>
+                  {/* Prominent Spotify preview link */}
                   {pl.spotifyUrl && (
                     <a
                       href={pl.spotifyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-1 block text-xs text-[#1DB954]/70 hover:text-[#1DB954]"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#1DB954]/10 px-3 py-1 text-xs font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
                     >
-                      Spotify ↗
+                      🎧 Listen on Spotify — preview playlist before selecting ↗
                     </a>
                   )}
+                </div>
+
+                {/* Price */}
+                <div className="shrink-0 text-right">
+                  <span className={`text-base font-bold ${
+                    pl.priceCents === 0 ? "text-blue-400" : "text-white"
+                  }`}>
+                    {formatPrice(pl.priceCents)}
+                  </span>
+                  <p className="mt-0.5 text-[10px] text-white/20">1 credit</p>
                 </div>
               </div>
             ))}
@@ -605,26 +615,14 @@ export default function PitchPage() {
               <div>
                 <p className="text-sm font-medium text-white">
                   {selected.size} curator{selected.size > 1 ? "s" : ""} selected
-                  {selectedFreeCount > 0 && (
-                    <span className="ml-2 text-blue-400">({selectedFreeCount} free)</span>
-                  )}
-                  {selectedPaidCount > 0 && (
-                    <span className="ml-1 text-amber-400">({selectedPaidCount} paid)</span>
-                  )}
                 </p>
                 <p className="text-sm text-white/40">
-                  {selectedPaidCount > 0 ? (
-                    <>
-                      Costs <span className="font-medium text-amber-400">{selectedPaidCount} credit{selectedPaidCount > 1 ? "s" : ""}</span>
-                      {creditBalance !== null && (
-                        <span className="ml-1">· You have {creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>
-                      )}
-                      {totalCost > 0 && (
-                        <span className="ml-1">· ${totalCost / 100} direct payment</span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="font-medium text-blue-400">All free — no credits needed</span>
+                  Costs <span className="font-medium text-amber-400">{creditsNeeded} credit{creditsNeeded > 1 ? "s" : ""}</span>
+                  {creditBalance !== null && (
+                    <span className="ml-1">· You have {creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>
+                  )}
+                  {totalCost > 0 && (
+                    <span className="ml-1">· ${totalCost / 100} direct payment to curator{totalCost / 100 > 1 ? "s" : ""}</span>
                   )}
                 </p>
               </div>
@@ -639,7 +637,7 @@ export default function PitchPage() {
                     Submitting...
                   </span>
                 ) : !hasEnoughCredits ? (
-                  `Need ${selectedPaidCount - (creditBalance ?? 0)} more credit${selectedPaidCount - (creditBalance ?? 0) > 1 ? "s" : ""}`
+                  `Need ${creditsNeeded - (creditBalance ?? 0)} more credit${creditsNeeded - (creditBalance ?? 0) > 1 ? "s" : ""}`
                 ) : (
                   `Submit to ${selected.size}`
                 )}

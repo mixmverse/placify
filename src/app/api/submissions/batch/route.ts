@@ -26,24 +26,12 @@ export async function POST(request: Request) {
 
   const userId = session.user.id;
 
-  // Count how many curators charge a fee — only those need credits
-  let paidCuratorCount = 0;
-  for (const curatorUserId of curatorUserIds) {
-    const profile = await db.curatorProfile.findUnique({
-      where: { userId: curatorUserId },
-      select: { priceCents: true },
-    });
-    if (profile && profile.priceCents > 0) paidCuratorCount++;
-  }
-
-  // Free curators cost 0 credits — only check balance for paid ones
-  if (paidCuratorCount > 0) {
-    const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
-    if (!user || user.creditBalance < paidCuratorCount) {
-      return NextResponse.json({
-        error: `You need ${paidCuratorCount} credit${paidCuratorCount > 1 ? "s" : ""} for paid curators but have ${user?.creditBalance ?? 0}`,
-      }, { status: 400 });
-    }
+  // Check credit balance — every curator selected costs 1 credit
+  const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
+  if (!user || user.creditBalance < curatorUserIds.length) {
+    return NextResponse.json({
+      error: `You need ${curatorUserIds.length} credit${curatorUserIds.length > 1 ? "s" : ""} but have ${user?.creditBalance ?? 0}. Buy more credits to continue.`,
+    }, { status: 400 });
   }
 
   // Find or create the track
@@ -95,17 +83,15 @@ export async function POST(request: Request) {
       });
       if (existing) continue;
 
-      // Spend one credit only for paid curators
-      if (hasFee) {
-        try {
-          await spendCredit(userId);
-          creditsUsed++;
-        } catch {
-          return NextResponse.json({
-            error: `Ran out of credits after ${creditsUsed} submissions`,
-            submitted: submissions.length,
-          }, { status: 400 });
-        }
+      // Spend one credit per curator submission
+      try {
+        await spendCredit(userId);
+        creditsUsed++;
+      } catch {
+        return NextResponse.json({
+          error: `Ran out of credits after ${creditsUsed} submissions`,
+          submitted: submissions.length,
+        }, { status: 400 });
       }
 
       const submission = await db.submission.create({
