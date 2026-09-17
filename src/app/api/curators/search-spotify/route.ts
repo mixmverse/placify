@@ -1,13 +1,14 @@
 // src/app/api/curators/search-spotify/route.ts
 import { NextResponse } from "next/server";
-import { SpotifyApi } from "spotify-web-api-node";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const SpotifyWebApi = require("spotify-web-api-node");
 import db from "@/lib/db";
 
-let _spotify: SpotifyApi | null = null;
+let _spotify: ReturnType<typeof SpotifyWebApi> | null = null;
 
-function getSpotifyClient(): SpotifyApi {
+function getSpotifyClient(): ReturnType<typeof SpotifyWebApi> {
   if (!_spotify) {
-    _spotify = new SpotifyApi({
+    _spotify = new SpotifyWebApi({
       clientId: process.env.SPOTIFY_CLIENT_ID ?? "",
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET ?? "",
     });
