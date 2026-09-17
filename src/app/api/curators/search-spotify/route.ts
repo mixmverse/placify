@@ -46,11 +46,8 @@ export async function GET(request: Request) {
       spotifyPlaylists = await searchSpotifyLive(genres);
     }
 
-    // 3. Always include demo playlists to ensure results even without Spotify API
-    const demoPlaylists = getDemoPlaylists(genres);
-
-    // 4. Combine: DB curators first, then Spotify results, then demo
-    const allResults = [...dbCurators, ...spotifyPlaylists, ...demoPlaylists];
+    // 3. Combine: DB curators first, then Spotify results
+    const allResults = [...dbCurators, ...spotifyPlaylists];
 
     // Deduplicate by name (DB/registered curators take priority)
     const seen = new Set<string>();
@@ -89,15 +86,13 @@ export async function GET(request: Request) {
     });
   } catch (err) {
     console.error("[search-spotify] Error:", err);
-    // Even on error, try to return demo playlists so the UI isn't broken
     const genresParam = new URL(request.url).searchParams.get("genres") ?? "";
     const genres = genresParam.split(",").map((g) => g.trim()).filter(Boolean);
-    const fallback = getDemoPlaylists(genres);
     return NextResponse.json({
-      playlists: fallback,
-      totalFound: fallback.length,
+      playlists: [],
+      totalFound: 0,
       genres,
-      source: "demo",
+      source: "error",
     });
   }
 }
