@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { spendCredit } from "@/lib/credits";
+import { sendPitchEmail } from "@/lib/pitch-email";
 import crypto from "crypto";
 
 // POST /api/submissions/batch
@@ -27,12 +28,17 @@ export async function POST(request: Request) {
   const userId = session.user.id;
 
   // Check credit balance — every curator selected costs 1 credit
-  const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { creditBalance: true, email: true, artistProfile: { select: { artistName: true } } },
+  });
   if (!user || user.creditBalance < curatorUserIds.length) {
     return NextResponse.json({
       error: `You need ${curatorUserIds.length} credit${curatorUserIds.length > 1 ? "s" : ""} but have ${user?.creditBalance ?? 0}. Buy more credits to continue.`,
     }, { status: 400 });
   }
+
+  const artistName = user.artistProfile?.artistName ?? "An artist";
 
   // Find or create the track
   let track = await db.track.findUnique({
@@ -72,8 +78,11 @@ export async function POST(request: Request) {
     const curatorProfile = await db.curatorProfile.findUnique({
       where: { userId: curatorUserId },
     });
+    const curatorUser = await db.user.findUnique({
+      where: { id: curatorUserId },
+      select: { email: true },
+    });
 
-    // Only spend credits for paid curators (priceCents > 0)
     const hasFee = curatorProfile && curatorProfile.priceCents > 0;
 
     for (const playlist of playlists) {
@@ -83,7 +92,7 @@ export async function POST(request: Request) {
       });
       if (existing) continue;
 
-      // Spend one credit per curator submission
+      // Spend one credit per submission
       try {
         await spendCredit(userId);
         creditsUsed++;
@@ -105,6 +114,19 @@ export async function POST(request: Request) {
           deadlineAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
         },
       });
+
+      // Generate pitch token for accept/reject links
+      const pitchToken = crypto.randomBytes(32).toString("hex");
+      const tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      await db.verificationToken.create({
+        data: {
+          identifier: `pitch:${submission.id}`,
+          token: pitchToken,
+          expires: tokenExpiry,
+        },
+      });
+
       submissions.push({
         ...submission,
         curatorPrice: curatorProfile?.priceCents ?? 0,
@@ -112,6 +134,25 @@ export async function POST(request: Request) {
         curatorPaymentInfo: curatorProfile?.paymentInfo ?? null,
         curatorName: curatorProfile?.displayName ?? null,
       });
+
+      // Send pitch email to curator (non-blocking)
+      if (curatorUser?.email) {
+        sendPitchEmail({
+          submissionId: submission.id,
+          curatorName: curatorProfile?.displayName ?? "Curator",
+          curatorEmail: curatorUser.email,
+          artistName,
+          trackTitle: track.title,
+          spotifyTrackId: track.spotifyTrackId,
+          playlistName: playlist.name,
+          message: null,
+          isPaid: hasFee ?? false,
+          priceCents: curatorProfile?.priceCents ?? 0,
+          paymentMethod: curatorProfile?.paymentMethod ?? null,
+          paymentInfo: curatorProfile?.paymentInfo ?? null,
+          pitchToken,
+        }).catch((e) => console.error(`Failed to send pitch email for submission ${submission.id}:`, e));
+      }
     }
   }
 
@@ -124,7 +165,6 @@ export async function POST(request: Request) {
     });
 
     if (curator && !curator.passwordHash && curator.curatorProfile) {
-      // Check if invitation already sent
       const existingToken = await db.verificationToken.findFirst({
         where: { identifier: curator.email },
       });
@@ -139,7 +179,6 @@ export async function POST(request: Request) {
 
         const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/curator/accept-invite?token=${token}`;
 
-        // Send email if Resend is configured
         const resendKey = process.env.RESEND_API_KEY;
         if (resendKey) {
           try {
