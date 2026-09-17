@@ -44,7 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { isArtist: true, isCurator: true, email: true, country: true },
         });
         if (dbUser) {
-          token.id = dbUser.email;
+          token.id = user.id;
           token.isArtist = dbUser.isArtist;
           token.isCurator = dbUser.isCurator;
           token.email = dbUser.email;
@@ -61,6 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { id: true, isArtist: true, isCurator: true, country: true },
         });
         if (dbUser) {
+          token.id = dbUser.id;
           token.isArtist = dbUser.isArtist;
           token.isCurator = dbUser.isCurator;
           token.country = dbUser.country;
@@ -72,6 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = token.id as string;
         session.user.isArtist = token.isArtist as boolean;
         session.user.isCurator = token.isCurator as boolean;
         session.user.country = token.country as string | null;
