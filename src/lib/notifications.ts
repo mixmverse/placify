@@ -2,7 +2,12 @@
 import db from "./db";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "");
+let resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
+  return resend;
+}
 
 export async function sendInAppNotification(
   userId: string,
@@ -24,7 +29,12 @@ export async function sendEmail(
   reactNode: React.ReactElement,
 ) {
   try {
-    await resend.emails.send({
+    const client = getResend();
+    if (!client) {
+      console.error("Resend email skipped: RESEND_API_KEY not set");
+      return;
+    }
+    await client.emails.send({
       from: "Placify <support@placify.com>",
       to,
       subject,
