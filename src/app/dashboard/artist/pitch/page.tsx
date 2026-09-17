@@ -25,6 +25,7 @@ type SpotifyPlaylist = {
   totalReviews: number;
   onTimeRate: number;
   curatorUserId: string | null;
+  alreadySubmitted?: boolean;
 };
 
 type SubmissionResult = {
@@ -53,16 +54,20 @@ export default function PitchPage() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [trackInfo, setTrackInfo] = useState<{ title: string; artistName: string } | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const filteredGenres = genreSearch
     ? POPULAR_GENRES.filter((g) => g.includes(genreSearch.toLowerCase()))
     : POPULAR_GENRES;
 
-  // Fetch credit balance on mount
+  // Fetch credit balance and user ID on mount
   useEffect(() => {
     fetch("/api/me")
       .then((r) => r.json())
-      .then((d) => setCreditBalance(d.creditBalance ?? 0))
+      .then((d) => {
+        setCreditBalance(d.creditBalance ?? 0);
+        setUserId(d.id ?? null);
+      })
       .catch(() => setCreditBalance(0));
   }, []);
 
@@ -119,7 +124,11 @@ export default function PitchPage() {
     setSelected(new Set());
     try {
       const genresParam = Array.from(selectedGenres).join(",");
-      const res = await fetch(`/api/curators/search-spotify?genres=${encodeURIComponent(genresParam)}`);
+      const trackId = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? "";
+      const params = new URLSearchParams({ genres: genresParam });
+      if (trackId) params.set("trackId", trackId);
+      if (userId) params.set("artistId", userId);
+      const res = await fetch(`/api/curators/search-spotify?${params.toString()}`);
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
       setPlaylists(data.playlists ?? []);
@@ -142,10 +151,11 @@ export default function PitchPage() {
   }
 
   function toggleAll() {
-    if (selected.size === playlists.length) {
+    const selectable = playlists.filter((p) => !p.alreadySubmitted);
+    if (selected.size === selectable.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(playlists.map((p) => p.id)));
+      setSelected(new Set(selectable.map((p) => p.id)));
     }
   }
 
@@ -514,7 +524,7 @@ export default function PitchPage() {
             <div>
               <h2 className="text-lg font-semibold text-white">Choose curators</h2>
               <p className="text-sm text-white/40">
-                {playlists.length} matching playlist{playlists.length > 1 ? "s" : ""} found
+                {playlists.filter((p) => !p.alreadySubmitted).length} available · {playlists.filter((p) => p.alreadySubmitted).length} already submitted
                 {searchSource === "demo" && (
                   <span className="ml-2 text-amber-400/60">(Demo — add Spotify API keys for live results)</span>
                 )}
@@ -534,21 +544,29 @@ export default function PitchPage() {
               <div
                 key={pl.id}
                 className={`flex items-start gap-4 rounded-xl border p-4 transition-all ${
-                  selected.has(pl.id)
-                    ? "border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                  pl.alreadySubmitted
+                    ? "border-amber-500/20 bg-amber-500/5 opacity-70"
+                    : selected.has(pl.id)
+                      ? "border-emerald-500/30 bg-emerald-500/5 shadow-lg shadow-emerald-500/5"
+                      : "border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                 }`}
               >
                 {/* Checkbox */}
                 <div
-                  onClick={() => togglePlaylist(pl.id)}
-                  className={`mt-1 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border transition-all ${
-                    selected.has(pl.id)
-                      ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                      : "border-white/20"
+                  onClick={() => !pl.alreadySubmitted && togglePlaylist(pl.id)}
+                  className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
+                    pl.alreadySubmitted
+                      ? "cursor-not-allowed border-amber-500/30 bg-amber-500/10"
+                      : selected.has(pl.id)
+                        ? "cursor-pointer border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                        : "cursor-pointer border-white/20 hover:border-white/40"
                   }`}
                 >
-                  {selected.has(pl.id) && <span className="text-xs">✓</span>}
+                  {pl.alreadySubmitted ? (
+                    <span className="text-xs text-amber-400">⚠</span>
+                  ) : selected.has(pl.id) ? (
+                    <span className="text-xs">✓</span>
+                  ) : null}
                 </div>
 
                 {/* Image */}
@@ -566,12 +584,16 @@ export default function PitchPage() {
                     <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-white/40">
                       {pl.matchedGenre}
                     </span>
-                    {pl.isRegistered && (
+                    {pl.alreadySubmitted ? (
+                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                        ⚠ Already Submitted
+                      </span>
+                    ) : pl.isRegistered ? (
                       <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                         ✓ Verified
                       </span>
-                    )}
-                    {pl.priceCents === 0 && (
+                    ) : null}
+                    {!pl.alreadySubmitted && pl.priceCents === 0 && (
                       <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
                         FREE
                       </span>
@@ -582,29 +604,37 @@ export default function PitchPage() {
                     {pl.totalReviews > 0 && ` · ${pl.totalReviews} reviews`}
                     {pl.priceCents > 0 && ` · ${formatPrice(pl.priceCents)} submission fee`}
                   </p>
-                  {/* Prominent Spotify preview link */}
-                  {pl.spotifyUrl && (
-                    <a
-                      href={pl.spotifyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#1DB954]/10 px-3 py-1 text-xs font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
-                    >
-                      🎧 Listen on Spotify — preview playlist before selecting ↗
-                    </a>
+                  {pl.alreadySubmitted ? (
+                    <p className="mt-2 text-xs text-amber-400/70">
+                      You already submitted this track to this curator
+                    </p>
+                  ) : (
+                    /* Prominent Spotify preview link */
+                    pl.spotifyUrl && (
+                      <a
+                        href={pl.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#1DB954]/10 px-3 py-1 text-xs font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                      >
+                        🎧 Listen on Spotify — preview playlist before selecting ↗
+                      </a>
+                    )
                   )}
                 </div>
 
                 {/* Price */}
-                <div className="shrink-0 text-right">
-                  <span className={`text-base font-bold ${
-                    pl.priceCents === 0 ? "text-blue-400" : "text-white"
-                  }`}>
-                    {formatPrice(pl.priceCents)}
-                  </span>
-                  <p className="mt-0.5 text-[10px] text-white/20">1 credit</p>
-                </div>
+                {!pl.alreadySubmitted && (
+                  <div className="shrink-0 text-right">
+                    <span className={`text-base font-bold ${
+                      pl.priceCents === 0 ? "text-blue-400" : "text-white"
+                    }`}>
+                      {formatPrice(pl.priceCents)}
+                    </span>
+                    <p className="mt-0.5 text-[10px] text-white/20">1 credit</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

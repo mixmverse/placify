@@ -23,12 +23,13 @@ function normalizeGenre(slug: string): string {
   return slug.toLowerCase().trim().replace(/\s+/g, "-");
 }
 
-// GET /api/curators/search-spotify?genres=afrobeat,hip-hop&limit=30
+// GET /api/curators/search-spotify?genres=afrobeat,hip-hop&trackId=4cOdK2wG&artistId=xxx
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const genresParam = searchParams.get("genres");
-    const limitParam = parseInt(searchParams.get("limit") ?? "30");
+    const trackIdParam = searchParams.get("trackId"); // optional: Spotify track ID to check for duplicates
+    const artistIdParam = searchParams.get("artistId"); // optional: artist user ID to check for duplicates
 
     if (!genresParam) {
       return NextResponse.json({ error: "genres parameter required" }, { status: 400 });
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
     // 2. Search Spotify live for playlists (or use demo if no creds or API fails)
     let spotifyPlaylists: SpotifyPlaylist[] = [];
     if (process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
-      spotifyPlaylists = await searchSpotifyLive(genres, limitParam);
+      spotifyPlaylists = await searchSpotifyLive(genres);
     }
 
     // 3. Always include demo playlists to ensure results even without Spotify API
@@ -61,8 +62,20 @@ export async function GET(request: Request) {
       deduplicated.push(r);
     }
 
-    // Sort: free first, then by follower count
+    // 5. Check for already-submitted curators (prevent duplicate submissions)
+    if (trackIdParam && artistIdParam) {
+      const submittedCuratorIds = await getAlreadySubmittedCurators(trackIdParam, artistIdParam);
+      for (const pl of deduplicated) {
+        if (pl.curatorUserId && submittedCuratorIds.has(pl.curatorUserId)) {
+          pl.alreadySubmitted = true;
+        }
+      }
+    }
+
+    // Sort: already-submitted last, then free first, then by follower count
     deduplicated.sort((a, b) => {
+      if (a.alreadySubmitted && !b.alreadySubmitted) return 1;
+      if (!a.alreadySubmitted && b.alreadySubmitted) return -1;
       if (a.priceCents === 0 && b.priceCents > 0) return -1;
       if (a.priceCents > 0 && b.priceCents === 0) return 1;
       return b.followerCount - a.followerCount;
@@ -86,6 +99,28 @@ export async function GET(request: Request) {
       genres,
       source: "demo",
     });
+  }
+}
+
+// Check which curators already have a submission for this track + artist
+async function getAlreadySubmittedCurators(trackId: string, artistId: string): Promise<Set<string>> {
+  try {
+    // Find the track by spotifyTrackId for this artist
+    const track = await db.track.findFirst({
+      where: { spotifyTrackId: trackId, userId: artistId },
+      select: { id: true },
+    });
+    if (!track) return new Set();
+
+    // Find all submissions for this track
+    const submissions = await db.submission.findMany({
+      where: { trackId: track.id, artistUserId: artistId },
+      select: { curatorUserId: true },
+    });
+
+    return new Set(submissions.map((s) => s.curatorUserId));
+  } catch {
+    return new Set();
   }
 }
 
@@ -211,7 +246,7 @@ async function getDbCurators(genres: string[]): Promise<SpotifyPlaylist[]> {
   return results;
 }
 
-async function searchSpotifyLive(genres: string[], limit: number): Promise<SpotifyPlaylist[]> {
+async function searchSpotifyLive(genres: string[]): Promise<SpotifyPlaylist[]> {
   const spotify = getSpotifyClient();
   try {
     const { body: token } = await spotify.clientCredentialsGrant();
@@ -500,4 +535,5 @@ type SpotifyPlaylist = {
   totalReviews: number;
   onTimeRate: number;
   curatorUserId: string | null;
+  alreadySubmitted?: boolean;
 };
