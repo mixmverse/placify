@@ -85,7 +85,7 @@ export async function GET(request: Request) {
       source: (dbCurators.length > 0 ? "registered" : spotifyPlaylists.length > 0 ? "spotify" : "demo"),
     });
   } catch (err) {
-    console.error("[search-spotify] Error:", err);
+    console.error("[search-spotify] Error:", err instanceof Error ? err.message : String(err), err);
     const genresParam = new URL(request.url).searchParams.get("genres") ?? "";
     const genres = genresParam.split(",").map((g) => g.trim()).filter(Boolean);
     return NextResponse.json({
@@ -93,6 +93,7 @@ export async function GET(request: Request) {
       totalFound: 0,
       genres,
       source: "error",
+      debug: err instanceof Error ? err.message : String(err),
     });
   }
 }
