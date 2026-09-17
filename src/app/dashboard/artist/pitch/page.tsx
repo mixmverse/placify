@@ -145,6 +145,8 @@ export default function PitchPage() {
   }
 
   function togglePlaylist(id: string) {
+    const pl = playlists.find((p) => p.id === id);
+    if (!pl || !pl.curatorUserId || pl.alreadySubmitted) return; // can't select demo or already-submitted
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -154,7 +156,7 @@ export default function PitchPage() {
   }
 
   function toggleAll() {
-    const selectable = playlists.filter((p) => !p.alreadySubmitted);
+    const selectable = playlists.filter((p) => p.curatorUserId && !p.alreadySubmitted);
     if (selected.size === selectable.length) {
       setSelected(new Set());
     } else {
@@ -168,6 +170,12 @@ export default function PitchPage() {
     setError("");
     try {
       const selectedPlaylists = playlists.filter((p) => selected.has(p.id));
+      const realCurators = selectedPlaylists.filter((p) => p.curatorUserId);
+      if (realCurators.length === 0) {
+        setError("No registered curators selected. Only verified curators can receive pitches. Try different genres to find registered curators.");
+        setLoading(null);
+        return;
+      }
       const trackId = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? "";
       const res = await fetch("/api/submissions/batch", {
         method: "POST",
@@ -181,7 +189,7 @@ export default function PitchPage() {
             durationMs: 180000,
             genres: Array.from(selectedGenres),
           },
-          curatorUserIds: selectedPlaylists.map((p) => p.curatorUserId).filter(Boolean),
+          curatorUserIds: realCurators.map((p) => p.curatorUserId),
           message: pitchMessage || null,
         }),
       });
@@ -529,7 +537,8 @@ export default function PitchPage() {
             <div>
               <h2 className="text-lg font-semibold text-white">Choose curators</h2>
               <p className="text-sm text-white/40">
-                {playlists.filter((p) => !p.alreadySubmitted).length} available · {playlists.filter((p) => p.alreadySubmitted).length} already submitted
+                {playlists.filter((p) => p.curatorUserId && !p.alreadySubmitted).length} available · {playlists.filter((p) => !p.curatorUserId).length} demo
+                {playlists.filter((p) => p.alreadySubmitted).length > 0 && ` · ${playlists.filter((p) => p.alreadySubmitted).length} already submitted`}
                 {searchSource === "demo" && (
                   <span className="ml-2 text-amber-400/60">(Demo — add Spotify API keys for live results)</span>
                 )}
@@ -558,16 +567,20 @@ export default function PitchPage() {
               >
                 {/* Checkbox */}
                 <div
-                  onClick={() => !pl.alreadySubmitted && togglePlaylist(pl.id)}
+                  onClick={() => togglePlaylist(pl.id)}
                   className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${
-                    pl.alreadySubmitted
-                      ? "cursor-not-allowed border-amber-500/30 bg-amber-500/10"
-                      : selected.has(pl.id)
-                        ? "cursor-pointer border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                        : "cursor-pointer border-white/20 hover:border-white/40"
+                    !pl.curatorUserId
+                      ? "cursor-not-allowed border-white/10 bg-white/5 opacity-40"
+                      : pl.alreadySubmitted
+                        ? "cursor-not-allowed border-amber-500/30 bg-amber-500/10"
+                        : selected.has(pl.id)
+                          ? "cursor-pointer border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                          : "cursor-pointer border-white/20 hover:border-white/40"
                   }`}
                 >
-                  {pl.alreadySubmitted ? (
+                  {!pl.curatorUserId ? (
+                    <span className="text-xs text-white/30">—</span>
+                  ) : pl.alreadySubmitted ? (
                     <span className="text-xs text-amber-400">⚠</span>
                   ) : selected.has(pl.id) ? (
                     <span className="text-xs">✓</span>
@@ -596,6 +609,10 @@ export default function PitchPage() {
                     ) : pl.isRegistered ? (
                       <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                         ✓ Verified
+                      </span>
+                    ) : !pl.curatorUserId ? (
+                      <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium text-white/30">
+                        Demo — Not Registered
                       </span>
                     ) : null}
                     {!pl.alreadySubmitted && pl.priceCents === 0 && (
