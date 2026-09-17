@@ -55,6 +55,9 @@ export default function PitchPage() {
   const [trackInfo, setTrackInfo] = useState<{ title: string; artistName: string } | null>(null);
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [pitchMessage, setPitchMessage] = useState(
+    "Hi! I came across your playlist and I really like the vibe. I wanted to submit my song for your consideration. I hope you enjoy it!",
+  );
 
   const filteredGenres = genreSearch
     ? POPULAR_GENRES.filter((g) => g.includes(genreSearch.toLowerCase()))
@@ -179,6 +182,7 @@ export default function PitchPage() {
             genres: Array.from(selectedGenres),
           },
           curatorUserIds: selectedPlaylists.map((p) => p.curatorUserId).filter(Boolean),
+          message: pitchMessage || null,
         }),
       });
       if (!res.ok) {
@@ -338,6 +342,7 @@ export default function PitchPage() {
               setSubmissionResults([]);
               setTrackInfo(null);
               setCustomGenres(false);
+              setPitchMessage("Hi! I came across your playlist and I really like the vibe. I wanted to submit my song for your consideration. I hope you enjoy it!");
             }}
             className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
           >
@@ -639,9 +644,28 @@ export default function PitchPage() {
             ))}
           </div>
 
+          {/* Message to curator */}
+          {selected.size > 0 && (
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-white/60">
+                Message to curators <span className="text-white/30">(optional — you can edit this)</span>
+              </label>
+              <textarea
+                value={pitchMessage}
+                onChange={(e) => setPitchMessage(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 resize-none"
+                placeholder="Hi! I came across your playlist and wanted to submit my song..."
+              />
+              <p className="mt-1 text-xs text-white/20">
+                This message is included in the email sent to each curator.
+              </p>
+            </div>
+          )}
+
           {/* Submit bar */}
           {selected.size > 0 && (
-            <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 backdrop-blur-sm">
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 backdrop-blur-sm">
               <div>
                 <p className="text-sm font-medium text-white">
                   {selected.size} curator{selected.size > 1 ? "s" : ""} selected

@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { spendCredit } from "@/lib/credits";
 import { sendPitchEmail } from "@/lib/pitch-email";
+import { sendInAppNotification } from "@/lib/notifications";
 import crypto from "crypto";
 
 // POST /api/submissions/batch
@@ -15,10 +16,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { spotifyTrackId, trackInfo, curatorUserIds } = body as {
+  const { spotifyTrackId, trackInfo, curatorUserIds, message } = body as {
     spotifyTrackId: string;
     trackInfo: { title: string; artistName: string; artworkUrl: string | null; durationMs: number; genres: string[] };
     curatorUserIds: string[];
+    message?: string | null;
   };
 
   if (!spotifyTrackId || !curatorUserIds?.length) {
@@ -110,7 +112,7 @@ export async function POST(request: Request) {
           artistUserId: userId,
           curatorUserId,
           status: hasFee ? "AWAITING_PAYMENT" : "PENDING",
-          message: null,
+          message: message || null,
           deadlineAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
         },
       });
@@ -145,7 +147,7 @@ export async function POST(request: Request) {
           trackTitle: track.title,
           spotifyTrackId: track.spotifyTrackId,
           playlistName: playlist.name,
-          message: null,
+          message: message || null,
           isPaid: hasFee ?? false,
           priceCents: curatorProfile?.priceCents ?? 0,
           paymentMethod: curatorProfile?.paymentMethod ?? null,
@@ -153,6 +155,17 @@ export async function POST(request: Request) {
           pitchToken,
         }).catch((e) => console.error(`Failed to send pitch email for submission ${submission.id}:`, e));
       }
+
+      // Create in-app notification for curator
+      sendInAppNotification(curatorUserId, "NEW_PITCH", {
+        submissionId: submission.id,
+        artistName,
+        trackTitle: track.title,
+        spotifyTrackId: track.spotifyTrackId,
+        playlistName: playlist.name,
+        message: message || null,
+        isPaid: hasFee ?? false,
+      }).catch((e) => console.error(`Failed to create notification for submission ${submission.id}:`, e));
     }
   }
 
