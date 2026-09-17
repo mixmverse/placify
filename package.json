@@ -22,6 +22,8 @@
     "curators:seed:african": "tsx scripts/seed-african-curators.ts",
     "curators:seed:batch3": "tsx scripts/seed-batch3-curators.ts",
     "genres:seed": "tsx scripts/seed-common-genres.ts",
+    "curators:discover": "tsx scripts/discover-spotify-curators.ts",
+    "curators:discover:dry": "tsx scripts/discover-spotify-curators.ts --dry-run",
     "postinstall": "prisma generate",
     "db:deploy": "prisma migrate deploy"
   },
