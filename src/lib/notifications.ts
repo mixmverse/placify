@@ -35,7 +35,7 @@ export async function sendEmail(
       return;
     }
     await client.emails.send({
-      from: "Placify <support@placify.com>",
+      from: "Placify <onboarding@resend.dev>",
       to,
       subject,
       react: reactNode,

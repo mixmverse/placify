@@ -178,7 +178,7 @@ export async function sendPitchEmail(data: PitchEmailData) {
 
   try {
     await resend.emails.send({
-      from: "Placify <noreply@placify.com>",
+      from: "Placify <onboarding@resend.dev>",
       to: data.curatorEmail,
       subject: `🎵 New pitch from ${data.artistName} — "${data.trackTitle}"`,
       react: PitchEmail(data),
