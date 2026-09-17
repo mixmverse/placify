@@ -20,6 +20,8 @@
     "curators:seed:pdf": "tsx scripts/seed-pdf-curators.ts",
     "curators:seed:online": "tsx scripts/seed-online-curators.ts",
     "curators:seed:african": "tsx scripts/seed-african-curators.ts",
+    "curators:seed:batch3": "tsx scripts/seed-batch3-curators.ts",
+    "genres:seed": "tsx scripts/seed-common-genres.ts",
     "postinstall": "prisma generate",
     "db:deploy": "prisma migrate deploy"
   },

@@ -81,12 +81,12 @@ export default function PitchPage() {
         return;
       }
       const res = await fetch(`/api/tracks/analyze?trackId=${trackId}`);
-      if (!res.ok) throw new Error("Could not analyze track");
       const data = await res.json();
-      const genres = data.genres ?? [];
+      const track = data.track ?? null;
+      const genres = track?.genres ?? data.genres ?? [];
       setDetectedGenres(genres);
       setSelectedGenres(new Set(genres));
-      setTrackInfo(data.track ?? null);
+      setTrackInfo(track ? { title: track.title, artistName: track.artistName } : null);
       setStep(2);
     } catch {
       setError("Could not analyze track. You can pick genres manually below.");

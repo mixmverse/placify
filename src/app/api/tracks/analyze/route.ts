@@ -15,10 +15,17 @@ export async function GET(request: Request) {
   try {
     const track = await validateTrackLink(trackId);
     return NextResponse.json({ track });
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Could not analyze track" },
-      { status: 400 },
-    );
+  } catch {
+    // Return demo data instead of failing — the pitch page needs to proceed
+    return NextResponse.json({
+      track: {
+        title: "Your Track",
+        artistName: "Artist",
+        artworkUrl: null,
+        durationMs: 180000,
+        genres: ["pop", "indie", "electronic"],
+      },
+      error: "Could not analyze track — using demo data. You can pick genres manually.",
+    });
   }
 }
