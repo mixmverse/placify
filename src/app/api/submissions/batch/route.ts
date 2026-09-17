@@ -26,10 +26,24 @@ export async function POST(request: Request) {
 
   const userId = session.user.id;
 
-  // Check credit balance
-  const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
-  if (!user || user.creditBalance < curatorUserIds.length) {
-    return NextResponse.json({ error: "Not enough credits" }, { status: 400 });
+  // Count how many curators charge a fee — only those need credits
+  let paidCuratorCount = 0;
+  for (const curatorUserId of curatorUserIds) {
+    const profile = await db.curatorProfile.findUnique({
+      where: { userId: curatorUserId },
+      select: { priceCents: true },
+    });
+    if (profile && profile.priceCents > 0) paidCuratorCount++;
+  }
+
+  // Free curators cost 0 credits — only check balance for paid ones
+  if (paidCuratorCount > 0) {
+    const user = await db.user.findUnique({ where: { id: userId }, select: { creditBalance: true } });
+    if (!user || user.creditBalance < paidCuratorCount) {
+      return NextResponse.json({
+        error: `You need ${paidCuratorCount} credit${paidCuratorCount > 1 ? "s" : ""} for paid curators but have ${user?.creditBalance ?? 0}`,
+      }, { status: 400 });
+    }
   }
 
   // Find or create the track
@@ -71,6 +85,9 @@ export async function POST(request: Request) {
       where: { userId: curatorUserId },
     });
 
+    // Only spend credits for paid curators (priceCents > 0)
+    const hasFee = curatorProfile && curatorProfile.priceCents > 0;
+
     for (const playlist of playlists) {
       // Check for existing active submission to this playlist
       const existing = await db.submission.findFirst({
@@ -78,19 +95,18 @@ export async function POST(request: Request) {
       });
       if (existing) continue;
 
-      // Spend one credit per submission
-      try {
-        await spendCredit(userId);
-        creditsUsed++;
-      } catch {
-        return NextResponse.json({
-          error: `Ran out of credits after ${creditsUsed} submissions`,
-          submitted: submissions.length,
-        }, { status: 400 });
+      // Spend one credit only for paid curators
+      if (hasFee) {
+        try {
+          await spendCredit(userId);
+          creditsUsed++;
+        } catch {
+          return NextResponse.json({
+            error: `Ran out of credits after ${creditsUsed} submissions`,
+            submitted: submissions.length,
+          }, { status: 400 });
+        }
       }
-
-      // If curator charges a fee, start as AWAITING_PAYMENT; otherwise PENDING
-      const hasFee = curatorProfile && curatorProfile.priceCents > 0;
 
       const submission = await db.submission.create({
         data: {

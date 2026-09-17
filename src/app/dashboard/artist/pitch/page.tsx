@@ -1,6 +1,6 @@
 // src/app/dashboard/artist/pitch/page.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const POPULAR_GENRES = [
   "afrobeat", "amapiano", "dancehall", "hip-hop", "house", "indie",
@@ -52,10 +52,19 @@ export default function PitchPage() {
   const [submissionResults, setSubmissionResults] = useState<SubmissionResult[]>([]);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [trackInfo, setTrackInfo] = useState<{ title: string; artistName: string } | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
 
   const filteredGenres = genreSearch
     ? POPULAR_GENRES.filter((g) => g.includes(genreSearch.toLowerCase()))
     : POPULAR_GENRES;
+
+  // Fetch credit balance on mount
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((d) => setCreditBalance(d.creditBalance ?? 0))
+      .catch(() => setCreditBalance(0));
+  }, []);
 
   function toggleGenre(genre: string) {
     setSelectedGenres((prev) => {
@@ -110,7 +119,7 @@ export default function PitchPage() {
     setSelected(new Set());
     try {
       const genresParam = Array.from(selectedGenres).join(",");
-      const res = await fetch(`/api/curators/search-spotify?genres=${encodeURIComponent(genresParam)}&limit=40`);
+      const res = await fetch(`/api/curators/search-spotify?genres=${encodeURIComponent(genresParam)}`);
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
       setPlaylists(data.playlists ?? []);
@@ -208,6 +217,16 @@ export default function PitchPage() {
   const totalCost = playlists
     .filter((p) => selected.has(p.id))
     .reduce((sum, p) => sum + p.priceCents, 0);
+
+  const selectedPaidCount = playlists
+    .filter((p) => selected.has(p.id) && p.priceCents > 0)
+    .length;
+
+  const selectedFreeCount = playlists
+    .filter((p) => selected.has(p.id) && p.priceCents === 0)
+    .length;
+
+  const hasEnoughCredits = creditBalance === null || selectedPaidCount <= creditBalance;
 
   const STEP_LABELS = ["Paste", "Pick Genres", "Choose Curators"];
 
@@ -586,18 +605,32 @@ export default function PitchPage() {
               <div>
                 <p className="text-sm font-medium text-white">
                   {selected.size} curator{selected.size > 1 ? "s" : ""} selected
+                  {selectedFreeCount > 0 && (
+                    <span className="ml-2 text-blue-400">({selectedFreeCount} free)</span>
+                  )}
+                  {selectedPaidCount > 0 && (
+                    <span className="ml-1 text-amber-400">({selectedPaidCount} paid)</span>
+                  )}
                 </p>
                 <p className="text-sm text-white/40">
-                  Cost: {totalCost === 0 ? (
-                    <span className="font-medium text-blue-400">FREE</span>
+                  {selectedPaidCount > 0 ? (
+                    <>
+                      Costs <span className="font-medium text-amber-400">{selectedPaidCount} credit{selectedPaidCount > 1 ? "s" : ""}</span>
+                      {creditBalance !== null && (
+                        <span className="ml-1">· You have {creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>
+                      )}
+                      {totalCost > 0 && (
+                        <span className="ml-1">· ${totalCost / 100} direct payment</span>
+                      )}
+                    </>
                   ) : (
-                    `$${(totalCost / 100).toFixed(2)} (pay curator directly)`
+                    <span className="font-medium text-blue-400">All free — no credits needed</span>
                   )}
                 </p>
               </div>
               <button
                 onClick={submitPitches}
-                disabled={loading === "search"}
+                disabled={loading === "search" || !hasEnoughCredits}
                 className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 disabled:opacity-50 disabled:shadow-none"
               >
                 {loading === "search" ? (
@@ -605,6 +638,8 @@ export default function PitchPage() {
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                     Submitting...
                   </span>
+                ) : !hasEnoughCredits ? (
+                  `Need ${selectedPaidCount - (creditBalance ?? 0)} more credit${selectedPaidCount - (creditBalance ?? 0) > 1 ? "s" : ""}`
                 ) : (
                   `Submit to ${selected.size}`
                 )}
