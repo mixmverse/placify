@@ -10,6 +10,7 @@ declare module "next-auth" {
       isArtist: boolean;
       isCurator: boolean;
       country?: string | null;
+      hasArtistProfile: boolean;
     };
   }
 }
@@ -20,5 +21,6 @@ declare module "next-auth/jwt" {
     isArtist?: boolean;
     isCurator?: boolean;
     country?: string | null;
+    hasArtistProfile?: boolean;
   }
 }

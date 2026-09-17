@@ -130,13 +130,6 @@ export default function OnboardingPage() {
         >
           {loading ? "Saving..." : "Continue to Dashboard →"}
         </button>
-
-        <button
-          onClick={() => router.push("/dashboard/artist")}
-          className="w-full text-center text-xs text-white/30 hover:text-white/50"
-        >
-          Skip for now
-        </button>
       </div>
     </div>
   );

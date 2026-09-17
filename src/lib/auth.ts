@@ -49,6 +49,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.email = dbUser.email;
           token.country = dbUser.country;
         }
+        // Check if artist profile exists
+        const profile = await db.artistProfile.findUnique({ where: { userId: user.id } });
+        token.hasArtistProfile = !!profile;
       }
       return token;
     },
@@ -57,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.isArtist = token.isArtist as boolean;
         session.user.isCurator = token.isCurator as boolean;
         session.user.country = token.country as string | null;
+        session.user.hasArtistProfile = (token.hasArtistProfile as boolean) ?? false;
       }
       return session;
     },
